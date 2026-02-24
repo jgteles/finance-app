@@ -73,13 +73,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+import os
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "financial_dashboard"),
+        "USER": os.getenv("POSTGRES_USER", "joao"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "123456"),
+        "HOST": "db",
+        "PORT": "5432",
     }
 }
 

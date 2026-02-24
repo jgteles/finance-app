@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: financial_db
+    restart: always
+    environment:
+      POSTGRES_DB: financial_dashboard
+      POSTGRES_USER: joao
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: financial_backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      POSTGRES_DB: financial_dashboard
+      POSTGRES_USER: joao
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+
+  frontend:
+    build: ./frontend
+    container_name: financial_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: financial_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: gcgabriel257@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 250303
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
