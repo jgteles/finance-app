@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "financial-dashboard"
+version = "0.1.0"
+description = "A financial dashboard application"
+authors = [{name = "João Guilherme"}]
+license = {text = "MIT"}
+requires-python = ">=3.11"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.git
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_glob = [".venv/*"]
+known_first_party = ["core", "transactions"]
+
+[tool.flake8]
+max-line-length = 100
+exclude = [".venv", ".git", "__pycache__", "migrations"]
+ignore = ["E203", "W503"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings.development"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = "--strict-markers --tb=short"
+testpaths = ["transactions"]

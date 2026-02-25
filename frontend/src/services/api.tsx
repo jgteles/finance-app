@@ -1,8 +1,23 @@
 const BASE_URL = "http://127.0.0.1:8000/api";
 
 export async function fetchTransactions() {
-  const response = await fetch(`${BASE_URL}/transactions/`);
-  return response.json();
+  try {
+    const response = await fetch(`${BASE_URL}/transactions/`);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar transações");
+    }
+
+    const data = await response.json();
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.results)) return data.results;
+
+    return [];
+  } catch (error) {
+    console.error("fetchTransactions error:", error);
+    return [];
+  }
 }
 
 export async function createTransaction(data: any) {

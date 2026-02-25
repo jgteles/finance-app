@@ -2,37 +2,58 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: financial_db
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: financial_dashboard
-      POSTGRES_USER: joao
-      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finance-network
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: dockerfile
     container_name: financial_backend
-    command: python manage.py runserver 0.0.0.0:8000
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      POSTGRES_DB: financial_dashboard
-      POSTGRES_USER: joao
-      POSTGRES_PASSWORD: 123456
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      SECRET_KEY: ${SECRET_KEY}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    restart: unless-stopped
+    networks:
+      - finance-network
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
     container_name: financial_frontend
     ports:
       - "5173:5173"
@@ -41,18 +62,32 @@ services:
       - /app/node_modules
     depends_on:
       - backend
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+      VITE_API_TIMEOUT: ${VITE_API_TIMEOUT}
+      VITE_GOOGLE_AI_KEY: ${VITE_GOOGLE_AI_KEY}
+      VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
+    restart: unless-stopped
+    networks:
+      - finance-network
 
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:latest
     container_name: financial_pgadmin
-    restart: always
+    restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: gcgabriel257@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: 250303
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
       - db
+    networks:
+      - finance-network
 
 volumes:
   postgres_data:
+
+networks:
+  finance-network:
+    driver: bridge
