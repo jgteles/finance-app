@@ -67,7 +67,6 @@ services:
       VITE_API_TIMEOUT: ${VITE_API_TIMEOUT}
       VITE_GOOGLE_AI_KEY: ${VITE_GOOGLE_AI_KEY}
       VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
-    restart: unless-stopped
     networks:
       - finance-network
 

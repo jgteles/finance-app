@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Transaction, TransactionType } from "@/types";
+import { TRANSACTION_CATEGORIES } from "@/src/constants";
 
 interface TransactionFormProps {
   onAdd: (transaction: Omit<Transaction, "id">) => void;
@@ -67,13 +68,18 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd }) => {
           <label className="text-[10px] font-bold text-slate-500 uppercase">
             Categoria
           </label>
-          <input
-            type="text"
-            placeholder="Ex: Lazer"
+          <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
+          >
+            <option value="">Selecione uma categoria</option>
+            {TRANSACTION_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="space-y-1">
           <label className="text-[10px] font-bold text-slate-500 uppercase">

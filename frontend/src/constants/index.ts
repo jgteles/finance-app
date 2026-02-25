@@ -20,6 +20,9 @@ export const TRANSACTION_CATEGORIES = [
   "Educação",
   "Entretenimento",
   "Utilidades",
+  "Lazer",
+  "Salário",
+  "Freelance",
   "Outros",
 ];
 

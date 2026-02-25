@@ -53,7 +53,7 @@ class UploadExcelView(APIView):
 class ExportFilteredExcelView(APIView):
     def post(self, request):
         transactions = request.data.get("transactions", [])
-
+        
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Transações"
