@@ -10,12 +10,25 @@ from django.http import HttpResponse
 import openpyxl
 from rest_framework import generics
 from .serializers import RegisterSerializer
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from .models import Transaction
+from .serializers import TransactionSerializer
+
 
 class TransactionViewSet(viewsets.ModelViewSet):
-    queryset = Transaction.objects.all().order_by('-date')
+    queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class UploadExcelView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         file = request.FILES.get("file")
@@ -28,18 +41,16 @@ class UploadExcelView(APIView):
 
         try:
             df = pd.read_excel(file)
-            print(df.columns)
-            df = pd.read_excel(file)
 
             for _, row in df.iterrows():
                 Transaction.objects.create(
+                    user=request.user,  # 👈 AQUI ESTÁ A CORREÇÃO
                     date=row["Data"],
                     description=row["Descrição"],
                     category=row["Categoria"],
                     value=row["Valor"],
                     type=row["Tipo"],
                 )
-
 
             return Response(
                 {"message": "Transações importadas com sucesso!"},
