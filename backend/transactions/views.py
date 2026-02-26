@@ -8,6 +8,8 @@ from rest_framework import status
 from datetime import datetime
 from django.http import HttpResponse
 import openpyxl
+from rest_framework import generics
+from .serializers import RegisterSerializer
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date')
@@ -76,3 +78,8 @@ class ExportFilteredExcelView(APIView):
 
         wb.save(response)
         return response
+    
+
+
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer

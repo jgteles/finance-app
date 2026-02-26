@@ -7,6 +7,7 @@ export interface Transaction {
   date: string;
   type: "Receita" | "Despesa";
   status?: "pending" | "completed" | "cancelled";
+  user: string;
 }
 
 export interface TransactionFilter {
