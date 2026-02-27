@@ -1,15 +1,12 @@
 import React, { useState } from "react";
-import { Info } from "lucide-react";
 import { useTransactions } from "@/src/hooks/useTransactions";
-import { analyzeTransactions } from "@/src/services/aiService";
 import { uploadExcel } from "@/src/services/excelService";
-import { MonthlyChart } from "@/components/Dashboards/GraficoMensal";
-import { Header } from "@/components/Header/Header";
-import { SummaryCards } from "@/components/SummaryCards/SummaryCards";
-import { AiInsight } from "@/components/AI/AiInsight";
-import { TransactionForm } from "@/components/Transaction/TransactionForm";
-import { TransactionTable } from "@/components/Transaction/TransactionTable";
-import { MonthlyDetailedChart } from "@/components/Dashboards/GraficoMensalDetalhado";
+import { MonthlyChart } from "@/src/components/Dashboards/GraficoMensal";
+import { Header } from "@/src/components/Header/Header";
+import { SummaryCards } from "@/src/components/SummaryCards/SummaryCards";
+import { TransactionForm } from "@/src/components/Transaction/TransactionForm";
+import { TransactionTable } from "@/src/components/Transaction/TransactionTable";
+import { MonthlyDetailedChart } from "@/src/components/Dashboards/GraficoMensalDetalhado";
 
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(

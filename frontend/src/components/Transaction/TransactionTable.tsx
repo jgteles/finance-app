@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Filter, Download, Calendar, Tag, Trash2, X } from "lucide-react";
 import { Transaction } from "@/types";
-import { formatCurrency, formatDate } from "../../utils";
+import { formatCurrency, formatDate } from "@/utils";
 
 interface TransactionTableProps {
   transactions: Transaction[];

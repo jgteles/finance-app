@@ -1,7 +1,7 @@
 import React from "react";
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import { Totals } from "@/types";
-import { formatCurrency } from "../../utils";
+import { formatCurrency } from "@/utils";
 
 interface SummaryCardsProps {
   totals: Totals;
