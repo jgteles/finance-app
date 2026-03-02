@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Filter, Download, Calendar, Tag, Trash2, X } from "lucide-react";
 import { Transaction } from "@/types";
 import { formatCurrency, formatDate } from "@/utils";
@@ -31,6 +31,25 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   categories = [],
 }) => {
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
+
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA;
+  });
+
+  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedTransactions = sortedTransactions.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
 
   const handleClearFilters = () => {
     onTypeChange?.("");
@@ -168,8 +187,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {transactions.length > 0 ? (
-              transactions.map((t) => (
+            {displayedTransactions.length > 0 ? (
+              displayedTransactions.map((t) => (
                 <tr
                   key={t.id}
                   className="hover:bg-slate-50/50 transition-colors group"
@@ -235,9 +254,48 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         </table>
       </div>
 
-      <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+      <div className="p-4 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
         <span>{transactions.length} registros encontrados</span>
-        <div className="flex gap-4">
+        <div className="flex justify-center">
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2 text-xs normal-case">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-2 py-1 rounded border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
+              >
+                Anterior
+              </button>
+
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-2 py-1 rounded border ${
+                      currentPage === page
+                        ? "border-indigo-300 bg-indigo-100 text-indigo-700"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 rounded border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
+              >
+                Próxima
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-4">
           <span className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> RECEITAs
           </span>
@@ -249,3 +307,4 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     </section>
   );
 };
+
