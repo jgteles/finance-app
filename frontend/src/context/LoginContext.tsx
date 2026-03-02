@@ -6,6 +6,7 @@ const BASE_URL = "http://127.0.0.1:8000/api";
 interface LoginContextType {
   token: string | null;
   isAuthenticated: boolean;
+  isAuthReady: boolean;
   isLoading: boolean;
   error: string;
   login: (username: string, password: string) => Promise<boolean>;
@@ -13,17 +14,38 @@ interface LoginContextType {
 }
 
 const LoginContext = createContext<LoginContextType | undefined>(undefined);
+const SESSION_DURATION_MS = 60 * 60 * 1000;
+const TOKEN_KEY = "token";
+const SESSION_EXPIRES_AT_KEY = "session_expires_at";
 
 export function LoginProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    const expiresAt = Number(localStorage.getItem(SESSION_EXPIRES_AT_KEY) || 0);
+    const now = Date.now();
+
     if (storedToken) {
-      setToken(storedToken);
+      if (!expiresAt) {
+        const fallbackExpiresAt = now + SESSION_DURATION_MS;
+        localStorage.setItem(
+          SESSION_EXPIRES_AT_KEY,
+          fallbackExpiresAt.toString(),
+        );
+        setToken(storedToken);
+      } else if (now < expiresAt) {
+        setToken(storedToken);
+      } else {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(SESSION_EXPIRES_AT_KEY);
+      }
     }
+
+    setIsAuthReady(true);
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -52,7 +74,9 @@ export function LoginProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.access) {
-        localStorage.setItem("token", data.access);
+        const expiresAt = Date.now() + SESSION_DURATION_MS;
+        localStorage.setItem(TOKEN_KEY, data.access);
+        localStorage.setItem(SESSION_EXPIRES_AT_KEY, expiresAt.toString());
         setToken(data.access);
         return true;
       }
@@ -68,7 +92,8 @@ export function LoginProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(SESSION_EXPIRES_AT_KEY);
     setToken(null);
   };
 
@@ -77,6 +102,7 @@ export function LoginProvider({ children }: { children: ReactNode }) {
       value={{
         token,
         isAuthenticated: !!token,
+        isAuthReady,
         isLoading,
         error,
         login,
