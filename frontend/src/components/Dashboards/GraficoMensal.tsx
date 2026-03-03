@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { parseAppDate } from "@/utils";
 import {
   BarChart,
   Bar,
@@ -48,7 +49,7 @@ export const MonthlyChart: React.FC<Props> = ({ transactions }) => {
     }));
 
     transactions.forEach((t) => {
-      const date = new Date(t.date);
+      const date = parseAppDate(t.date);
 
       if (date.getFullYear() === currentYear) {
         const monthIndex = date.getMonth();

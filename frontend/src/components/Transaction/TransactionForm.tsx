@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Transaction, TransactionType } from "@/types";
 import { TRANSACTION_CATEGORIES } from "@/src/constants";
+import { toDateInputValue } from "@/utils";
 
 interface TransactionFormProps {
   onAdd: (transaction: Omit<Transaction, "id">) => void;
@@ -11,7 +12,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd }) => {
   const [description, setDescription] = useState("");
   const [value, setValue] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(toDateInputValue());
   const [type, setType] = useState<TransactionType>("Despesa");
 
   const handleSubmit = (e: React.FormEvent) => {

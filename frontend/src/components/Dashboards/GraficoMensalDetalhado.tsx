@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { parseAppDate } from "@/utils";
 
 import {
   ResponsiveContainer,
@@ -63,8 +64,8 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
 }) => {
   // 🔹 Os dados já vêm filtrados pelo mês, apenas ordenar
   const monthTransactions = useMemo(() => {
-    return transactions.sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    return [...transactions].sort(
+      (a, b) => parseAppDate(a.date).getTime() - parseAppDate(b.date).getTime(),
     );
   }, [transactions]);
 
@@ -73,7 +74,7 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
     const groupedByDay: Record<number, any> = {};
 
     monthTransactions.forEach((t) => {
-      const day = new Date(t.date).getDate();
+      const day = parseAppDate(t.date).getDate();
 
       if (!groupedByDay[day]) {
         groupedByDay[day] = { day, movimentacaoLiquida: 0 };
@@ -210,3 +211,4 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
     </div>
   );
 };
+

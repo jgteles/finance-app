@@ -7,10 +7,11 @@ import { SummaryCards } from "@/src/components/SummaryCards/SummaryCards";
 import { TransactionForm } from "@/src/components/Transaction/TransactionForm";
 import { TransactionTable } from "@/src/components/Transaction/TransactionTable";
 import { MonthlyDetailedChart } from "@/src/components/Dashboards/GraficoMensalDetalhado";
+import { parseAppDate, toMonthInputValue } from "@/utils";
 
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7), // YYYY-MM
+    toMonthInputValue(), // YYYY-MM
   );
 
   // 🔹 Hook principal de transações
@@ -53,17 +54,17 @@ export default function Dashboard() {
       selectedCategory === "" || t.category === selectedCategory;
 
     const matchStartDate =
-      startDate === "" || new Date(t.date) >= new Date(startDate);
+      startDate === "" || parseAppDate(t.date) >= parseAppDate(startDate);
 
     const matchEndDate =
-      endDate === "" || new Date(t.date) <= new Date(endDate);
+      endDate === "" || parseAppDate(t.date) <= parseAppDate(endDate);
 
     return matchType && matchCategory && matchStartDate && matchEndDate;
   });
 
   const monthTransactions = filteredTransactions.filter((t) => {
-    const date = new Date(t.date);
-    const formatted = date.toISOString().slice(0, 7);
+    const date = parseAppDate(t.date);
+    const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     return formatted === selectedMonth;
   });
 

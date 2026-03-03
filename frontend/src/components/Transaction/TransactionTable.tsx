@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Filter, Download, Calendar, Tag, Trash2, X } from "lucide-react";
 import { Transaction } from "@/types";
-import { formatCurrency, formatDate } from "@/utils";
+import { formatCurrency, formatDate, parseAppDate } from "@/utils";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -35,8 +35,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   const itemsPerPage = 15;
 
   const sortedTransactions = [...transactions].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
+    const dateA = parseAppDate(a.date).getTime();
+    const dateB = parseAppDate(b.date).getTime();
     return dateB - dateA;
   });
 
