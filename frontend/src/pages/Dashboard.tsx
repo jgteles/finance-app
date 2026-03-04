@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTransactions } from "@/src/hooks/useTransactions";
 import { uploadExcel } from "@/src/services/excelService";
 import { MonthlyChart } from "@/src/components/Dashboards/GraficoMensal";
-import { DashboardNavbar } from "@/src/components/Navbar/DashboardNavbar";
+import { DashboardNavbar } from "@/src/components/Navbar/Navbar";
 import { SummaryCards } from "@/src/components/SummaryCards/SummaryCards";
 import { TransactionForm } from "@/src/components/Transaction/TransactionForm";
 import { TransactionTable } from "@/src/components/Transaction/TransactionTable";
