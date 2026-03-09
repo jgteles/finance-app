@@ -69,26 +69,28 @@ export const MonthlyChart: React.FC<Props> = ({ transactions }) => {
   }, [transactions, currentYear]);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <div className="flex h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="text-lg font-semibold mb-4 text-slate-800">
         Desempenho Anual {currentYear}
       </h3>
 
-      <ResponsiveContainer width="100%" height={350}>
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
+      <div className="min-h-0 flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
 
-          {/* RECEITA */}
-          <Bar dataKey="Receita" fill="#10b981" radius={[6, 6, 0, 0]} />
+            {/* RECEITA */}
+            <Bar dataKey="Receita" fill="#10b981" radius={[6, 6, 0, 0]} />
 
-          {/* Despesa */}
-          <Bar dataKey="Despesa" fill="#ef4444" radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+            {/* Despesa */}
+            <Bar dataKey="Despesa" fill="#ef4444" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

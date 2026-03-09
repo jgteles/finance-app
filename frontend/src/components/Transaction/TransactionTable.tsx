@@ -32,7 +32,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 12;
 
   const sortedTransactions = [...transactions].sort((a, b) => {
     const dateA = parseAppDate(a.date).getTime();
@@ -113,8 +113,16 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       </div>
 
       {/* 🔹 FILTROS */}
-      {showFilters && (
-        <div className="flex flex-wrap gap-3 p-4 bg-slate-50/50 border-b border-slate-100 items-center">
+      <div
+        className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-out ${
+          showFilters ? "max-h-72 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div
+          className={`flex flex-wrap gap-3 p-4 bg-slate-50/50 border-b border-slate-100 items-center transition-transform duration-300 ease-out ${
+            showFilters ? "translate-y-0" : "-translate-y-2"
+          }`}
+        >
           <select
             value={selectedType}
             onChange={(e) => onTypeChange?.(e.target.value)}
@@ -160,7 +168,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             Limpar Filtros
           </button>
         </div>
-      )}
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">

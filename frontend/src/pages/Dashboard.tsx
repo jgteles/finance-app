@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTransactions } from "@/src/hooks/useTransactions";
 import { uploadExcel } from "@/src/services/excelService";
 import { MonthlyChart } from "@/src/components/Dashboards/GraficoMensal";
+import { CategoryPieChart } from "@/src/components/Dashboards/GraficoPizza";
 import { DashboardNavbar } from "@/src/components/Navbar/Navbar";
 import { SummaryCards } from "@/src/components/SummaryCards/SummaryCards";
 import { TransactionForm } from "@/src/components/Transaction/TransactionForm";
@@ -58,7 +59,7 @@ export default function Dashboard() {
     return matchType && matchCategory && matchStartDate && matchEndDate;
   });
 
-  const monthTransactions = filteredTransactions.filter((t) => {
+  const monthTransactions = transactions.filter((t) => {
     const date = parseAppDate(t.date);
     const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     return formatted === selectedMonth;
@@ -102,34 +103,40 @@ export default function Dashboard() {
 
         <TransactionForm onAdd={addTransaction} />
 
-        <TransactionTable
-          transactions={filteredTransactions}
-          onDelete={removeTransaction}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          startDate={startDate}
-          onStartDateChange={setStartDate}
-          endDate={endDate}
-          onEndDateChange={setEndDate}
-          categories={categories}
-        />
-
-        <div className="mt-8 grid h-[400px] grid-cols-1 gap-6 md:grid-cols-2">
-          <MonthlyDetailedChart
-            transactions={monthTransactions}
-            selectedMonth={selectedMonth}
-            onMonthChange={setSelectedMonth}
+        <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <TransactionTable
+            transactions={filteredTransactions}
+            onDelete={removeTransaction}
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            startDate={startDate}
+            onStartDateChange={setStartDate}
+            endDate={endDate}
+            onEndDateChange={setEndDate}
+            categories={categories}
           />
-          <MonthlyChart transactions={transactions} />
 
-          <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-slate-400 shadow-sm">
-            Espaco para novo grafico
-          </div>
+          <div className="overflow-x-auto pb-2">
+            <div className="flex min-w-max gap-6">
+              <div className="grid w-[380px] min-w-[380px] grid-cols-1 gap-6">
+                <MonthlyDetailedChart
+                  transactions={monthTransactions}
+                  selectedMonth={selectedMonth}
+                  onMonthChange={setSelectedMonth}
+                />
+                <MonthlyChart transactions={transactions} />
+              </div>
 
-          <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-slate-400 shadow-sm">
-            Espaco para novo grafico
+              <div className="grid w-[380px] min-w-[380px] grid-cols-1 gap-6">
+                <CategoryPieChart transactions={transactions} />
+
+                <div className="flex h-[420px] items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-slate-400 shadow-sm">
+                  Espaco para novo grafico
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

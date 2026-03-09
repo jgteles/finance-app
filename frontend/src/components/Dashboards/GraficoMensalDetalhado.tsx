@@ -123,32 +123,32 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <div className="flex h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex flex-col gap-4">
         <h3 className="text-lg font-semibold text-slate-800">
           Evolução do Saldo
         </h3>
 
-        <div className="flex gap-3">
+        <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => onMonthChange(e.target.value)}
-            className="border border-slate-300 text-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
           <button
             onClick={exportMonthToExcel}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            className="w-full rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white transition-colors hover:bg-indigo-700 lg:w-auto"
           >
             Exportar mês
           </button>
         </div>
       </div>
 
-      <div className="w-full h-[320px]">
+      <div className="w-full min-h-0 flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={dailyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={dailyData} margin={{ top: 10, right: 8, left: 8, bottom: 0 }}>
             <defs>
               
               <linearGradient id="colorSaldoPos" x1="0" y1="0" x2="0" y2="1">
@@ -177,7 +177,7 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
               tick={{ fontSize: 12, fill: '#64748b' }}
               axisLine={false}
               tickLine={false}
-              dx={-10}
+              width={72}
             />
 
             {/* Injetando nosso Tooltip Customizado aqui */}
