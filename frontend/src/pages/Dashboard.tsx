@@ -2,23 +2,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTransactions } from "@/src/hooks/useTransactions";
 import { uploadExcel } from "@/src/services/excelService";
-import { MonthlyChart } from "@/src/components/Dashboards/GraficoMensal";
-import { CategoryPieChart } from "@/src/components/Dashboards/GraficoPizza";
 import { DashboardNavbar } from "@/src/components/Navbar/Navbar";
-import { SummaryCards } from "@/src/components/SummaryCards/SummaryCards";
 import { TransactionForm } from "@/src/components/Transaction/TransactionForm";
 import { TransactionTable } from "@/src/components/Transaction/TransactionTable";
-import { MonthlyDetailedChart } from "@/src/components/Dashboards/GraficoMensalDetalhado";
 import { useLogin } from "@/src/context/LoginContext";
-import { parseAppDate, toMonthInputValue } from "@/utils";
+import { parseAppDate } from "@/utils";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { logout } = useLogin();
-
-  const [selectedMonth, setSelectedMonth] = useState(
-    toMonthInputValue(), // YYYY-MM
-  );
 
   const { transactions, addTransaction, removeTransaction } =
     useTransactions();
@@ -59,27 +51,7 @@ export default function Dashboard() {
     return matchType && matchCategory && matchStartDate && matchEndDate;
   });
 
-  const monthTransactions = transactions.filter((t) => {
-    const date = parseAppDate(t.date);
-    const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    return formatted === selectedMonth;
-  });
-
   const categories = [...new Set(transactions.map((t) => t.category))];
-
-  const filteredTotals = filteredTransactions.reduce(
-    (acc, t) => {
-      if (t.type === "Receita") {
-        acc.income += Number(t.value);
-      } else if (t.type === "Despesa") {
-        acc.expense += Number(t.value);
-      }
-      return acc;
-    },
-    { income: 0, expense: 0 },
-  );
-
-  filteredTotals.balance = filteredTotals.income - filteredTotals.expense;
 
   const handleLogout = () => {
     logout();
@@ -99,11 +71,25 @@ export default function Dashboard() {
           className="hidden"
         />
 
-        <SummaryCards totals={filteredTotals} />
+        <div className="mb-6 flex gap-2">
+          <button
+            type="button"
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+          >
+            Transacoes
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/analytics")}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            Dashboard
+          </button>
+        </div>
 
         <TransactionForm onAdd={addTransaction} />
 
-        <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className="mt-8">
           <TransactionTable
             transactions={filteredTransactions}
             onDelete={removeTransaction}
@@ -117,27 +103,6 @@ export default function Dashboard() {
             onEndDateChange={setEndDate}
             categories={categories}
           />
-
-          <div className="overflow-x-auto pb-2">
-            <div className="flex min-w-max gap-6">
-              <div className="grid w-[380px] min-w-[380px] grid-cols-1 gap-6">
-                <MonthlyDetailedChart
-                  transactions={monthTransactions}
-                  selectedMonth={selectedMonth}
-                  onMonthChange={setSelectedMonth}
-                />
-                <MonthlyChart transactions={transactions} />
-              </div>
-
-              <div className="grid w-[380px] min-w-[380px] grid-cols-1 gap-6">
-                <CategoryPieChart transactions={transactions} />
-
-                <div className="flex h-[420px] items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-slate-400 shadow-sm">
-                  Espaco para novo grafico
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
