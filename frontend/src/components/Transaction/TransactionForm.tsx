@@ -6,7 +6,7 @@ import { toDateInputValue } from "@/utils";
 import "./TransactionForm.css";
 
 interface TransactionFormProps {
-  onAdd: (transaction: Omit<Transaction, "id">) => void;
+  onAdd: (transaction: Omit<Transaction, "id">) => void | Promise<void>;
 }
 
 export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd }) => {
@@ -16,11 +16,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd }) => {
   const [date, setDate] = useState(toDateInputValue());
   const [type, setType] = useState<TransactionType>("Despesa");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !value || !category || !date) return;
 
-    onAdd({
+    await onAdd({
       date,
       description,
       category,

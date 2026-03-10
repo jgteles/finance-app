@@ -18,6 +18,7 @@ interface TransactionsContextType {
   isLoading: boolean;
   refreshTransactions: () => Promise<void>;
   addTransaction: (data: Omit<Transaction, "id">) => Promise<void>;
+  updateTransaction: (id: number, data: Omit<Transaction, "id">) => Promise<void>;
   removeTransaction: (id: number) => Promise<void>;
 }
 
@@ -133,6 +134,30 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateTransaction = async (id: number, data: Omit<Transaction, "id">) => {
+    try {
+      const response = await fetch(`${BASE_URL}/transactions/${id}/`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
+
+      if (response.status === 401) {
+        logout();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Erro ao atualizar transacao: ${response.status}`);
+      }
+
+      await refreshTransactions();
+    } catch (err) {
+      console.error("updateTransaction error:", err);
+      throw err;
+    }
+  };
+
   const removeTransaction = async (id: number) => {
     try {
       const response = await fetch(`${BASE_URL}/transactions/${id}/`, {
@@ -164,6 +189,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         isLoading,
         refreshTransactions,
         addTransaction,
+        updateTransaction,
         removeTransaction,
       }}
     >

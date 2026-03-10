@@ -252,19 +252,59 @@
   color: #be123c; /* rose-700 */
 }
 
-.transactionTable__deleteBtn {
-  padding: 0.5rem;
-  color: #cbd5e1; /* slate-300 */
-  border-radius: 0.5rem;
-  transition: opacity 150ms ease, color 150ms ease, background-color 150ms ease;
-  opacity: 0;
+.transactionTable__editControl {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0; /* slate-200 */
+  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #334155; /* slate-700 */
 }
 
-.transactionTable__row:hover .transactionTable__deleteBtn {
+.transactionTable__editControl:focus {
+  outline: none;
+  border-color: #6366f1; /* indigo-500 */
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+.transactionTable__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.transactionTable__row:hover .transactionTable__actions,
+.transactionTable__actions--editing {
   opacity: 1;
 }
 
-.transactionTable__deleteBtn:hover {
+.transactionTable__actionBtn {
+  padding: 0.5rem;
+  color: #cbd5e1; /* slate-300 */
+  border-radius: 0.5rem;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.transactionTable__actionBtn--edit:hover {
+  color: #4f46e5; /* indigo-600 */
+  background: #eef2ff; /* indigo-50 */
+}
+
+.transactionTable__actionBtn--save:hover {
+  color: #059669; /* emerald-600 */
+  background: #ecfdf5; /* emerald-50 */
+}
+
+.transactionTable__actionBtn--cancel:hover {
+  color: #64748b; /* slate-500 */
+  background: #f8fafc; /* slate-50 */
+}
+
+.transactionTable__actionBtn--delete:hover {
   color: #e11d48; /* rose-600 */
   background: #fff1f2; /* rose-50 */
 }

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Filter, Download, Calendar, Tag, Trash2, X } from "lucide-react";
+import { Filter, Download, Calendar, Tag, Trash2, X, Pencil, Check } from "lucide-react";
 import { Transaction } from "@/types";
+import { TRANSACTION_CATEGORIES } from "@/src/constants";
 import { formatCurrency, formatDate, parseAppDate } from "@/utils";
 import "./TransactionTable.css";
 
 interface TransactionTableProps {
   transactions: Transaction[];
-  onDelete: (id: number) => void;
+  onDelete: (id: number) => void | Promise<void>;
+  onUpdate?: (id: number, data: Omit<Transaction, "id">) => void | Promise<void>;
   selectedType?: string;
   onTypeChange?: (value: string) => void;
   selectedCategory?: string;
@@ -21,6 +23,7 @@ interface TransactionTableProps {
 export const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
   onDelete,
+  onUpdate,
   selectedType = "",
   onTypeChange,
   selectedCategory = "",
@@ -33,6 +36,20 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editDraft, setEditDraft] = useState<{
+    date: string;
+    description: string;
+    category: string;
+    value: string;
+    type: Transaction["type"];
+  }>({
+    date: "",
+    description: "",
+    category: "",
+    value: "",
+    type: "Despesa",
+  });
   const itemsPerPage = 12;
 
   const sortedTransactions = [...transactions].sort((a, b) => {
@@ -40,6 +57,10 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     const dateB = parseAppDate(b.date).getTime();
     return dateB - dateA;
   });
+
+  const editCategories = Array.from(
+    new Set([...TRANSACTION_CATEGORIES, ...categories]),
+  );
 
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -57,6 +78,62 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     onCategoryChange?.("");
     onStartDateChange?.("");
     onEndDateChange?.("");
+  };
+
+  const handleStartEdit = (t: Transaction) => {
+    setEditingId(t.id);
+    setEditDraft({
+      date: t.date,
+      description: t.description,
+      category: t.category,
+      value: String(t.value),
+      type: t.type,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditDraft({
+      date: "",
+      description: "",
+      category: "",
+      value: "",
+      type: "Despesa",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingId == null || !onUpdate) return;
+
+    if (
+      !editDraft.date ||
+      !editDraft.description ||
+      !editDraft.category ||
+      !editDraft.value
+    ) {
+      alert("Preencha todos os campos para salvar.");
+      return;
+    }
+
+    const parsedValue = Number(editDraft.value);
+    if (Number.isNaN(parsedValue)) {
+      alert("Valor invÃ¡lido.");
+      return;
+    }
+
+    try {
+      await onUpdate(editingId, {
+        date: editDraft.date,
+        description: editDraft.description,
+        category: editDraft.category,
+        value: parsedValue,
+        type: editDraft.type,
+      });
+
+      handleCancelEdit();
+    } catch (err) {
+      alert("NÃ£o foi possÃ­vel salvar a transaÃ§Ã£o.");
+    }
   };
 
   const handleExport = async () => {
@@ -213,42 +290,163 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 return (
                   <tr key={t.id} className="transactionTable__row">
                     <td className="transactionTable__td">
-                      <div className="transactionTable__dateCell">
-                        <Calendar size={14} className="transactionTable__dateCellIcon" />
-                        {formatDate(t.date)}
-                      </div>
+                      {editingId === t.id ? (
+                        <input
+                          type="date"
+                          value={editDraft.date}
+                          onChange={(e) =>
+                            setEditDraft((prev) => ({ ...prev, date: e.target.value }))
+                          }
+                          className="transactionTable__editControl"
+                        />
+                      ) : (
+                        <div className="transactionTable__dateCell">
+                          <Calendar
+                            size={14}
+                            className="transactionTable__dateCellIcon"
+                          />
+                          {formatDate(t.date)}
+                        </div>
+                      )}
                     </td>
                     <td className="transactionTable__td">
-                      <span className="transactionTable__description">
-                        {t.description}
-                      </span>
+                      {editingId === t.id ? (
+                        <input
+                          type="text"
+                          value={editDraft.description}
+                          onChange={(e) =>
+                            setEditDraft((prev) => ({
+                              ...prev,
+                              description: e.target.value,
+                            }))
+                          }
+                          className="transactionTable__editControl"
+                        />
+                      ) : (
+                        <span className="transactionTable__description">
+                          {t.description}
+                        </span>
+                      )}
                     </td>
                     <td className="transactionTable__td">
-                      <div className="transactionTable__categoryPill">
-                        <Tag size={10} />
-                        {t.category}
-                      </div>
+                      {editingId === t.id ? (
+                        <select
+                          value={editDraft.category}
+                          onChange={(e) =>
+                            setEditDraft((prev) => ({
+                              ...prev,
+                              category: e.target.value,
+                            }))
+                          }
+                          className="transactionTable__editControl"
+                        >
+                          <option value="">Selecione</option>
+                          {!editCategories.includes(t.category) && (
+                            <option value={t.category}>{t.category}</option>
+                          )}
+                          {editCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="transactionTable__categoryPill">
+                          <Tag size={10} />
+                          {t.category}
+                        </div>
+                      )}
                     </td>
                     <td className="transactionTable__td">
-                      <span className={`transactionTable__value ${valueTone}`}>
-                        {t.type === "Despesa" && "- "}
-                        {formatCurrency(t.value)}
-                      </span>
+                      {editingId === t.id ? (
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editDraft.value}
+                          onChange={(e) =>
+                            setEditDraft((prev) => ({
+                              ...prev,
+                              value: e.target.value,
+                            }))
+                          }
+                          className="transactionTable__editControl"
+                        />
+                      ) : (
+                        <span className={`transactionTable__value ${valueTone}`}>
+                          {t.type === "Despesa" && "- "}
+                          {formatCurrency(t.value)}
+                        </span>
+                      )}
                     </td>
                     <td className="transactionTable__td">
-                      <span className={`transactionTable__typeBadge ${typeTone}`}>
-                        {t.type}
-                      </span>
+                      {editingId === t.id ? (
+                        <select
+                          value={editDraft.type}
+                          onChange={(e) =>
+                            setEditDraft((prev) => ({
+                              ...prev,
+                              type: e.target.value as Transaction["type"],
+                            }))
+                          }
+                          className="transactionTable__editControl"
+                        >
+                          <option value="Receita">Receita</option>
+                          <option value="Despesa">Despesa</option>
+                        </select>
+                      ) : (
+                        <span className={`transactionTable__typeBadge ${typeTone}`}>
+                          {t.type}
+                        </span>
+                      )}
                     </td>
                     <td className="transactionTable__td transactionTable__td--center">
-                      <button
-                        onClick={() => onDelete(t.id)}
-                        className="transactionTable__deleteBtn"
-                        title="Excluir"
-                        aria-label="Excluir transaÃ§Ã£o"
+                      <div
+                        className={`transactionTable__actions ${
+                          editingId === t.id ? "transactionTable__actions--editing" : ""
+                        }`}
                       >
-                        <Trash2 size={18} />
-                      </button>
+                        {editingId === t.id ? (
+                          <>
+                            <button
+                              onClick={() => void handleSaveEdit()}
+                              className="transactionTable__actionBtn transactionTable__actionBtn--save"
+                              title="Salvar"
+                              aria-label="Salvar transaÃ§Ã£o"
+                            >
+                              <Check size={18} />
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="transactionTable__actionBtn transactionTable__actionBtn--cancel"
+                              title="Cancelar"
+                              aria-label="Cancelar ediÃ§Ã£o"
+                            >
+                              <X size={18} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {onUpdate && (
+                              <button
+                                onClick={() => handleStartEdit(t)}
+                                className="transactionTable__actionBtn transactionTable__actionBtn--edit"
+                                title="Editar"
+                                aria-label="Editar transaÃ§Ã£o"
+                              >
+                                <Pencil size={18} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => void onDelete(t.id)}
+                              className="transactionTable__actionBtn transactionTable__actionBtn--delete"
+                              title="Excluir"
+                              aria-label="Excluir transaÃ§Ã£o"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -256,7 +454,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             ) : (
               <tr>
                 <td colSpan={6} className="transactionTable__empty">
-                  Nenhuma transaÃ§Ã£o registrada.
+                  Nenhuma transação registrada.
                 </td>
               </tr>
             )}
@@ -303,7 +501,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 disabled={currentPage === totalPages}
                 className="transactionTable__pageBtn transactionTable__pageBtn--nav"
               >
-                PrÃ³xima
+                Próxima
               </button>
             </div>
           )}

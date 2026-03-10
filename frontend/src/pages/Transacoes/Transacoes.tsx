@@ -13,7 +13,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { logout } = useLogin();
 
-  const { transactions, addTransaction, removeTransaction } = useTransactions();
+  const { transactions, addTransaction, updateTransaction, removeTransaction } =
+    useTransactions();
 
   const openFileSelector = () => {
     document.getElementById("excel-upload")?.click();
@@ -76,7 +77,7 @@ export default function Dashboard() {
             type="button"
             className="transacoesPage__tab transacoesPage__tab--active"
           >
-            TransaÃ§Ãµes
+            Transações
           </button>
           <button
             type="button"
@@ -93,6 +94,7 @@ export default function Dashboard() {
           <TransactionTable
             transactions={filteredTransactions}
             onDelete={removeTransaction}
+            onUpdate={updateTransaction}
             selectedType={selectedType}
             onTypeChange={setSelectedType}
             selectedCategory={selectedCategory}
