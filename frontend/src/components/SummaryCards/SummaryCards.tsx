@@ -2,55 +2,53 @@ import React from "react";
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import { Totals } from "@/types";
 import { formatCurrency } from "@/utils";
+import "./SummaryCards.css";
 
 interface SummaryCardsProps {
   totals: Totals;
 }
 
-export const SummaryCards: React.FC<SummaryCardsProps> = ({ totals }) => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-      <div>
-        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-          Saldo Atual
-        </p>
-        <h2
-          className={`text-2xl font-bold mt-1 ${totals.balance >= 0 ? "text-slate-900" : "text-red-600"}`}
-        >
-          {formatCurrency(totals.balance)}
-        </h2>
-      </div>
-      <div className="bg-slate-100 p-3 rounded-xl text-slate-600">
-        <Wallet size={24} />
-      </div>
-    </div>
+export const SummaryCards: React.FC<SummaryCardsProps> = ({ totals }) => {
+  const balanceTone =
+    totals.balance >= 0 ? "summaryCards__value--neutral" : "summaryCards__value--negative";
 
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-      <div>
-        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-          Receitas
-        </p>
-        <h2 className="text-2xl font-bold mt-1 text-emerald-600">
-          {formatCurrency(totals.income)}
-        </h2>
+  return (
+    <div className="summaryCards__grid">
+      <div className="summaryCards__card">
+        <div>
+          <p className="summaryCards__label">Saldo Atual</p>
+          <h2 className={`summaryCards__value ${balanceTone}`}>
+            {formatCurrency(totals.balance)}
+          </h2>
+        </div>
+        <div className="summaryCards__icon summaryCards__icon--wallet">
+          <Wallet size={24} />
+        </div>
       </div>
-      <div className="bg-emerald-50 p-3 rounded-xl text-emerald-600">
-        <TrendingUp size={24} />
-      </div>
-    </div>
 
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-      <div>
-        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-          Despesas
-        </p>
-        <h2 className="text-2xl font-bold mt-1 text-rose-600">
-          {formatCurrency(totals.expense)}
-        </h2>
+      <div className="summaryCards__card">
+        <div>
+          <p className="summaryCards__label">Receitas</p>
+          <h2 className="summaryCards__value summaryCards__value--income">
+            {formatCurrency(totals.income)}
+          </h2>
+        </div>
+        <div className="summaryCards__icon summaryCards__icon--income">
+          <TrendingUp size={24} />
+        </div>
       </div>
-      <div className="bg-rose-50 p-3 rounded-xl text-rose-600">
-        <TrendingDown size={24} />
+
+      <div className="summaryCards__card">
+        <div>
+          <p className="summaryCards__label">Despesas</p>
+          <h2 className="summaryCards__value summaryCards__value--expense">
+            {formatCurrency(totals.expense)}
+          </h2>
+        </div>
+        <div className="summaryCards__icon summaryCards__icon--expense">
+          <TrendingDown size={24} />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};

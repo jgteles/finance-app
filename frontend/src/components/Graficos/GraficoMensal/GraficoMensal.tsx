@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { parseAppDate } from "@/utils";
+import "./GraficoMensal.css";
 
 import {
   ResponsiveContainer,
@@ -25,27 +26,33 @@ interface Props {
   onMonthChange: (month: string) => void;
 }
 
-// 🔹 Nosso Tooltip Customizado
+// ðŸ”¹ Nosso Tooltip Customizado
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     // Pegamos todos os dados do dia atual que estamos passando o mouse
-    const dadosDoDia = payload[0].payload; 
+    const dadosDoDia = payload[0].payload;
 
     return (
-      <div className="bg-white/95 border border-slate-200 p-4 rounded-xl shadow-md">
-        <p className="font-bold text-slate-700 mb-2 border-b pb-1">Dia {label}</p>
-        
-        <div className="flex flex-col gap-1">
-          <p className="text-slate-600 text-sm flex justify-between gap-4">
+      <div className="graficoMensal__tooltip">
+        <p className="graficoMensal__tooltipTitle">Dia {label}</p>
+
+        <div className="graficoMensal__tooltipRows">
+          <p className="graficoMensal__tooltipRow">
             <span>Saldo do Dia:</span>
-            <span className="font-semibold text-blue-600">
+            <span className="graficoMensal__tooltipValue graficoMensal__tooltipValue--info">
               R$ {dadosDoDia.saldoAcumulado.toFixed(2)}
             </span>
           </p>
-          
-          <p className="text-slate-600 text-sm flex justify-between gap-4">
+
+          <p className="graficoMensal__tooltipRow">
             <span>Movimentação:</span>
-            <span className={`font-semibold ${dadosDoDia.movimentacaoLiquida >= 0 ? "text-green-600" : "text-red-600"}`}>
+            <span
+              className={`graficoMensal__tooltipValue ${
+                dadosDoDia.movimentacaoLiquida >= 0
+                  ? "graficoMensal__tooltipValue--positive"
+                  : "graficoMensal__tooltipValue--negative"
+              }`}
+            >
               {dadosDoDia.movimentacaoLiquida >= 0 ? "+" : ""}
               R$ {dadosDoDia.movimentacaoLiquida.toFixed(2)}
             </span>
@@ -62,14 +69,15 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
   selectedMonth,
   onMonthChange,
 }) => {
-  // 🔹 Os dados já vêm filtrados pelo mês, apenas ordenar
+  // ðŸ”¹ Os dados jÃ¡ vÃªm filtrados pelo mÃªs, apenas ordenar
   const monthTransactions = useMemo(() => {
     return [...transactions].sort(
-      (a, b) => parseAppDate(a.date).getTime() - parseAppDate(b.date).getTime(),
+      (a, b) =>
+        parseAppDate(a.date).getTime() - parseAppDate(b.date).getTime(),
     );
   }, [transactions]);
 
-  // 🔹 Agrupar dados por DIA
+  // ðŸ”¹ Agrupar dados por DIA
   const dailyData = useMemo(() => {
     const groupedByDay: Record<number, any> = {};
 
@@ -88,10 +96,12 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
       }
     });
 
-    const sortedDays = Object.values(groupedByDay).sort((a: any, b: any) => a.day - b.day);
+    const sortedDays = Object.values(groupedByDay).sort(
+      (a: any, b: any) => a.day - b.day,
+    );
     let saldoAcumulado = 0;
 
-   return sortedDays.map((d: any) => {
+    return sortedDays.map((d: any) => {
       saldoAcumulado += d.movimentacaoLiquida;
 
       return {
@@ -104,11 +114,11 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
     });
   }, [monthTransactions]);
 
-  // 🔹 Exportar Excel
+  // ðŸ”¹ Exportar Excel
   const exportMonthToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(monthTransactions);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Mês");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "MÃªs");
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -123,34 +133,31 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-6 flex flex-col gap-4">
-        <h3 className="text-lg font-semibold text-slate-800">
-          Evolução do Saldo
-        </h3>
+    <div className="graficoMensal__container">
+      <div className="graficoMensal__header">
+        <h3 className="graficoMensal__title">Evolução do Saldo</h3>
 
-        <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="graficoMensal__controls">
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => onMonthChange(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="graficoMensal__monthInput"
           />
 
-          <button
-            onClick={exportMonthToExcel}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white transition-colors hover:bg-indigo-700 lg:w-auto"
-          >
-            Exportar mês
+          <button onClick={exportMonthToExcel} className="graficoMensal__exportBtn">
+            Exportar Excel
           </button>
         </div>
       </div>
 
-      <div className="w-full min-h-0 flex-1">
+      <div className="graficoMensal__chartWrap">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={dailyData} margin={{ top: 10, right: 8, left: 8, bottom: 0 }}>
+          <AreaChart
+            data={dailyData}
+            margin={{ top: 10, right: 8, left: 8, bottom: 0 }}
+          >
             <defs>
-              
               <linearGradient id="colorSaldoPos" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
                 <stop offset="95%" stopColor="#10b9818f" stopOpacity={0} />
@@ -162,19 +169,23 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="#e2e8f0"
+            />
 
-            <XAxis 
-              dataKey="day" 
-              tickFormatter={(val) => `${val}`} 
-              tick={{ fontSize: 12, fill: '#64748b' }}
+            <XAxis
+              dataKey="day"
+              tickFormatter={(val) => `${val}`}
+              tick={{ fontSize: 12, fill: "#64748b" }}
               axisLine={false}
               tickLine={false}
               dy={10}
             />
-            <YAxis 
-              tickFormatter={(val) => `R$ ${val}`} 
-              tick={{ fontSize: 12, fill: '#64748b' }}
+            <YAxis
+              tickFormatter={(val) => `R$ ${val}`}
+              tick={{ fontSize: 12, fill: "#64748b" }}
               axisLine={false}
               tickLine={false}
               width={72}
@@ -184,31 +195,30 @@ export const MonthlyDetailedChart: React.FC<Props> = ({
             <Tooltip content={<CustomTooltip />} />
 
             {/* Linha ondulada do Saldo (monotone = ondulado) */}
-              {/* Área Positiva */}
-              <Area
-                type="monotone"
-                dataKey="saldoPositivo"
-                stroke="#10B981"
-                strokeWidth={3}
-                fill="url(#colorSaldoPos)"
-                dot={false}
-                activeDot={{ r: 0 }}
-              />
+            {/* Ãrea Positiva */}
+            <Area
+              type="monotone"
+              dataKey="saldoPositivo"
+              stroke="#10B981"
+              strokeWidth={3}
+              fill="url(#colorSaldoPos)"
+              dot={false}
+              activeDot={{ r: 0 }}
+            />
 
-              {/* Área Negativa */}
-              <Area
-                type="monotone"
-                dataKey="saldoNegativo"
-                stroke="#ef4444"
-                strokeWidth={3}
-                fill="url(#colorSaldoNeg)"
-                dot={false}
-                activeDot={{ r: 0 }}
-              />
+            {/* Ãrea Negativa */}
+            <Area
+              type="monotone"
+              dataKey="saldoNegativo"
+              stroke="#ef4444"
+              strokeWidth={3}
+              fill="url(#colorSaldoNeg)"
+              dot={false}
+              activeDot={{ r: 0 }}
+            />
           </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
 };
-

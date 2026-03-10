@@ -44,7 +44,7 @@ export const CategoryPieChart: React.FC<Props> = ({ transactions }) => {
   return (
     <div className="flex h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="text-lg font-semibold mb-4 text-slate-800">
-        Distribuicao por Categoria
+        Distribuição por Categoria
       </h3>
 
       {data.length === 0 ? (

@@ -1,0 +1,105 @@
+/* GraficoAnual.tsx (RevenueOverviewChart) */
+
+.graficoAnual__container {
+  height: 420px;
+  border-radius: 1rem; /* rounded-2xl */
+  border: 1px solid #1e293b; /* slate-800 */
+  background: linear-gradient(to bottom, #07163b, #060f2d);
+  padding: 1.25rem; /* p-5 */
+  color: #f1f5f9; /* slate-100 */
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+}
+
+@media (min-width: 768px) {
+  .graficoAnual__container {
+    padding: 1.5rem; /* md:p-6 */
+  }
+}
+
+.graficoAnual__header {
+  margin-bottom: 1.25rem; /* mb-5 */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem; /* gap-3 */
+}
+
+.graficoAnual__kicker {
+  margin: 0;
+  font-size: 0.75rem; /* text-xs */
+  text-transform: uppercase;
+  letter-spacing: 0.05em; /* tracking-wider */
+  color: #cbd5e1; /* slate-300 */
+}
+
+.graficoAnual__valueRow {
+  margin-top: 0.25rem; /* mt-1 */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.graficoAnual__value {
+  margin: 0;
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 600; /* font-semibold */
+  color: #ffffff;
+}
+
+.graficoAnual__badge {
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem; /* px-1.5 py-0.5 */
+  font-size: 11px; /* text-[11px] */
+  font-weight: 500; /* font-medium */
+}
+
+.graficoAnual__badge--positive {
+  background: rgb(16 185 129 / 0.2); /* emerald-500/20 */
+  color: #6ee7b7; /* emerald-300 */
+}
+
+.graficoAnual__badge--negative {
+  background: rgb(244 63 94 / 0.2); /* rose-500/20 */
+  color: #fda4af; /* rose-300 */
+}
+
+.graficoAnual__legend {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* gap-4 */
+  font-size: 0.75rem; /* text-xs */
+  color: #cbd5e1; /* slate-300 */
+}
+
+.graficoAnual__legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem; /* gap-1.5 */
+}
+
+.graficoAnual__dot {
+  height: 0.5rem; /* h-2 */
+  width: 0.5rem; /* w-2 */
+  border-radius: 9999px;
+}
+
+.graficoAnual__dot--revenue {
+  background: #c084fc; /* violet-400 */
+}
+
+.graficoAnual__dot--expense {
+  background: #22d3ee; /* cyan-400 */
+}
+
+.graficoAnual__year {
+  border-radius: 0.25rem;
+  border: 1px solid #334155; /* slate-700 */
+  padding: 0.25rem 0.5rem; /* px-2 py-1 */
+  font-size: 11px; /* text-[11px] */
+  color: #cbd5e1; /* slate-300 */
+}
+
+.graficoAnual__chart {
+  height: 320px;
+}

@@ -1,0 +1,58 @@
+/* Transacoes/Transacoes.tsx */
+
+.transacoesPage__root {
+  min-height: 100vh; /* min-h-screen */
+  background: #f8fafc; /* slate-50 */
+  padding: 1rem; /* p-4 */
+  color: #0f172a; /* slate-900 */
+}
+
+@media (min-width: 768px) {
+  .transacoesPage__root {
+    padding: 2rem; /* md:p-8 */
+  }
+}
+
+.transacoesPage__container {
+  max-width: 72rem; /* max-w-6xl */
+  margin: 0 auto; /* mx-auto */
+}
+
+.transacoesPage__fileInput {
+  display: none; /* hidden */
+}
+
+.transacoesPage__tabs {
+  margin-bottom: 1.5rem; /* mb-6 */
+  display: flex;
+  gap: 0.5rem; /* gap-2 */
+}
+
+.transacoesPage__tab {
+  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  transition: background-color 150ms ease, color 150ms ease,
+    border-color 150ms ease;
+}
+
+.transacoesPage__tab--active {
+  border: 1px solid transparent;
+  background: #0f172a; /* slate-900 */
+  color: #ffffff;
+}
+
+.transacoesPage__tab--inactive {
+  border: 1px solid #cbd5e1; /* slate-300 */
+  background: #ffffff;
+  color: #334155; /* slate-700 */
+}
+
+.transacoesPage__tab--inactive:hover {
+  background: #f1f5f9; /* slate-100 */
+}
+
+.transacoesPage__table {
+  margin-top: 2rem; /* mt-8 */
+}

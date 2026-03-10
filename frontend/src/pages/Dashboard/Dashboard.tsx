@@ -4,12 +4,12 @@ import { useTransactions } from "@/src/hooks/useTransactions";
 import { uploadExcel } from "@/src/services/excelService";
 import { DashboardNavbar } from "@/src/components/Navbar/Navbar";
 import { SummaryCards } from "@/src/components/SummaryCards/SummaryCards";
-import { MonthlyDetailedChart } from "@/src/components/Dashboards/GraficoMensalDetalhado";
-import { MonthlyChart } from "@/src/components/Dashboards/GraficoMensal";
-import { CategoryPieChart } from "@/src/components/Dashboards/GraficoPizza";
-import { RevenueOverviewChart } from "@/src/components/Dashboards/RevenueOverviewChart";
+import { MonthlyDetailedChart } from "@/src/components/Graficos/GraficoMensal/GraficoMensal";
+import { CategoryPieChart } from "@/src/components/Graficos/GraficoPizza/GraficoPizza";
+import { RevenueOverviewChart } from "@/src/components/Graficos/GraficoAnual/GraficoAnual";
 import { useLogin } from "@/src/context/LoginContext";
 import { parseAppDate, toMonthInputValue } from "@/utils";
+import "./Dashboard.css";
 
 export default function DashboardAnalytics() {
   const navigate = useNavigate();
@@ -60,8 +60,8 @@ export default function DashboardAnalytics() {
   totals.balance = totals.income - totals.expense;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 text-slate-900 md:p-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="dashboardPage__root">
+      <div className="dashboardPage__container">
         <DashboardNavbar onImport={openFileSelector} onLogout={handleLogout} />
 
         <input
@@ -69,20 +69,20 @@ export default function DashboardAnalytics() {
           type="file"
           accept=".xlsx, .xls"
           onChange={handleImport}
-          className="hidden"
+          className="dashboardPage__fileInput"
         />
 
-        <div className="mb-6 flex gap-2">
+        <div className="dashboardPage__tabs">
           <button
             type="button"
             onClick={() => navigate("/dashboard")}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            className="dashboardPage__tab dashboardPage__tab--inactive"
           >
             Transacoes
           </button>
           <button
             type="button"
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+            className="dashboardPage__tab dashboardPage__tab--active"
           >
             Dashboard
           </button>
@@ -90,16 +90,16 @@ export default function DashboardAnalytics() {
 
         <SummaryCards totals={totals} />
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-8">
+        <div className="dashboardPage__grid">
+          <div className="dashboardPage__col dashboardPage__col--8">
             <RevenueOverviewChart transactions={transactions} />
           </div>
 
-          <div className="lg:col-span-4">
+          <div className="dashboardPage__col dashboardPage__col--4">
             <CategoryPieChart transactions={transactions} />
           </div>
 
-          <div className="lg:col-span-6">
+          <div className="dashboardPage__col dashboardPage__col--6">
             <MonthlyDetailedChart
               transactions={monthTransactions}
               selectedMonth={selectedMonth}
@@ -107,9 +107,6 @@ export default function DashboardAnalytics() {
             />
           </div>
 
-          <div className="lg:col-span-6">
-            <MonthlyChart transactions={transactions} />
-          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { FileUp, BrainCircuit } from "lucide-react";
+import "./Header.css";
 
 interface HeaderProps {
   onImport: () => void;
@@ -12,20 +13,16 @@ export const Header: React.FC<HeaderProps> = ({
   onAnalyze,
   isAnalyzing,
 }) => (
-  <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-    <div>
-      <h1 className="text-3xl font-bold text-indigo-900 font-sans">
-        Finance Manager
-      </h1>
-      <p className="text-slate-500">Controle suas finanças com suporte a IA</p>
+  <header className="header__root">
+    <div className="header__brand">
+      <h1 className="header__title">Finance Manager</h1>
+      <p className="header__subtitle">Controle suas finanÃ§as com suporte a IA</p>
     </div>
-    <div className="flex gap-2">
-      <button
-        onClick={onImport}
-        className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-      >
-        <FileUp size={18} className="text-indigo-600" />
-        <span className="font-medium text-sm">Importar Excel</span>
+
+    <div className="header__actions">
+      <button onClick={onImport} className="header__button">
+        <FileUp size={18} className="header__buttonIcon" />
+        <span className="header__buttonText">Importar Excel</span>
       </button>
     </div>
   </header>

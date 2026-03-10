@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Filter, Download, Calendar, Tag, Trash2, X } from "lucide-react";
 import { Transaction } from "@/types";
 import { formatCurrency, formatDate, parseAppDate } from "@/utils";
+import "./TransactionTable.css";
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -57,6 +58,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     onStartDateChange?.("");
     onEndDateChange?.("");
   };
+
   const handleExport = async () => {
     try {
       const response = await fetch(
@@ -90,43 +92,45 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     }
   };
 
+  const filterPanelTone = showFilters
+    ? "transactionTable__filters--open"
+    : "transactionTable__filters--closed";
+
+  const filterRailTone = showFilters
+    ? "transactionTable__filtersRail--open"
+    : "transactionTable__filtersRail--closed";
+
+  const shouldPaginate = totalPages > 1;
+
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-        <h3 className="text-lg font-bold text-slate-800">
-          Transações Recentes
-        </h3>
-        <div className="flex items-center gap-2">
+    <section className="transactionTable__card">
+      <div className="transactionTable__header">
+        <h3 className="transactionTable__title">Transações Recentes</h3>
+        <div className="transactionTable__headerActions">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+            className="transactionTable__iconBtn"
+            aria-label="Filtros"
           >
             <Filter size={20} />
           </button>
           <button
             onClick={handleExport}
-            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+            className="transactionTable__iconBtn"
+            aria-label="Exportar"
           >
             <Download size={20} />
           </button>
         </div>
       </div>
 
-      {/* 🔹 FILTROS */}
-      <div
-        className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-out ${
-          showFilters ? "max-h-72 opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div
-          className={`flex flex-wrap gap-3 p-4 bg-slate-50/50 border-b border-slate-100 items-center transition-transform duration-300 ease-out ${
-            showFilters ? "translate-y-0" : "-translate-y-2"
-          }`}
-        >
+      {/* FILTROS */}
+      <div className={`transactionTable__filters ${filterPanelTone}`}>
+        <div className={`transactionTable__filtersRail ${filterRailTone}`}>
           <select
             value={selectedType}
             onChange={(e) => onTypeChange?.(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="transactionTable__filterControl"
           >
             <option value="">Todos os tipos</option>
             <option value="Receita">Receita</option>
@@ -136,7 +140,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
           <select
             value={selectedCategory}
             onChange={(e) => onCategoryChange?.(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="transactionTable__filterControl"
           >
             <option value="">Todas categorias</option>
             {categories.map((cat) => (
@@ -146,115 +150,113 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             ))}
           </select>
 
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => onStartDateChange?.(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
+          <div className="transactionTable__dateControl">
+            <Calendar size={14} className="transactionTable__dateIcon" />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => onStartDateChange?.(e.target.value)}
+              className="transactionTable__dateInput"
+              placeholder="Data inicial"
+            />
+          </div>
 
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => onEndDateChange?.(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
+          <div className="transactionTable__dateControl">
+            <Calendar size={14} className="transactionTable__dateIcon" />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => onEndDateChange?.(e.target.value)}
+              className="transactionTable__dateInput"
+              placeholder="Data final"
+            />
+          </div>
 
           <button
+            type="button"
             onClick={handleClearFilters}
-            className="ml-auto px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded text-sm transition-all flex items-center gap-1"
+            className="transactionTable__clearBtn"
           >
             <X size={16} />
-            Limpar Filtros
+            Limpar
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Data
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Descrição
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Categoria
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Valor
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Tipo
-              </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">
-                Ação
+      <div className="transactionTable__tableWrap">
+        <table className="transactionTable__table">
+          <thead className="transactionTable__thead">
+            <tr className="transactionTable__theadRow">
+              <th className="transactionTable__th">Data</th>
+              <th className="transactionTable__th">Descrição</th>
+              <th className="transactionTable__th">Categoria</th>
+              <th className="transactionTable__th">Valor</th>
+              <th className="transactionTable__th">Tipo</th>
+              <th className="transactionTable__th transactionTable__th--center">
+                Ações
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+
+          <tbody className="transactionTable__tbody">
             {displayedTransactions.length > 0 ? (
-              displayedTransactions.map((t) => (
-                <tr
-                  key={t.id}
-                  className="hover:bg-slate-50/50 transition-colors group"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-slate-600 text-sm">
-                      <Calendar size={14} className="text-slate-400" />
-                      {formatDate(t.date)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-semibold text-slate-700">
-                      {t.description}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 bg-slate-100 w-fit px-2 py-1 rounded-full text-[9px] font-bold text-slate-500 uppercase tracking-tight">
-                      <Tag size={10} />
-                      {t.category}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-sm font-bold ${t.type === "Receita" ? "text-emerald-600" : "text-rose-600"}`}
-                    >
-                      {t.type === "Despesa" && "- "}
-                      {formatCurrency(t.value)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                        t.type === "Receita"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-rose-100 text-rose-700"
-                      }`}
-                    >
-                      {t.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => onDelete(t.id)}
-                      className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                      title="Excluir"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
+              displayedTransactions.map((t) => {
+                const valueTone =
+                  t.type === "Receita"
+                    ? "transactionTable__value--income"
+                    : "transactionTable__value--expense";
+                const typeTone =
+                  t.type === "Receita"
+                    ? "transactionTable__typeBadge--income"
+                    : "transactionTable__typeBadge--expense";
+
+                return (
+                  <tr key={t.id} className="transactionTable__row">
+                    <td className="transactionTable__td">
+                      <div className="transactionTable__dateCell">
+                        <Calendar size={14} className="transactionTable__dateCellIcon" />
+                        {formatDate(t.date)}
+                      </div>
+                    </td>
+                    <td className="transactionTable__td">
+                      <span className="transactionTable__description">
+                        {t.description}
+                      </span>
+                    </td>
+                    <td className="transactionTable__td">
+                      <div className="transactionTable__categoryPill">
+                        <Tag size={10} />
+                        {t.category}
+                      </div>
+                    </td>
+                    <td className="transactionTable__td">
+                      <span className={`transactionTable__value ${valueTone}`}>
+                        {t.type === "Despesa" && "- "}
+                        {formatCurrency(t.value)}
+                      </span>
+                    </td>
+                    <td className="transactionTable__td">
+                      <span className={`transactionTable__typeBadge ${typeTone}`}>
+                        {t.type}
+                      </span>
+                    </td>
+                    <td className="transactionTable__td transactionTable__td--center">
+                      <button
+                        onClick={() => onDelete(t.id)}
+                        className="transactionTable__deleteBtn"
+                        title="Excluir"
+                        aria-label="Excluir transaÃ§Ã£o"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-6 py-12 text-center text-slate-400 text-sm italic"
-                >
-                  Nenhuma transação registrada.
+                <td colSpan={6} className="transactionTable__empty">
+                  Nenhuma transaÃ§Ã£o registrada.
                 </td>
               </tr>
             )}
@@ -262,33 +264,36 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         </table>
       </div>
 
-      <div className="p-4 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 items-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+      <div className="transactionTable__footer">
         <span>{transactions.length} registros encontrados</span>
-        <div className="flex justify-center">
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2 text-xs normal-case">
+
+        <div className="transactionTable__pagination">
+          {shouldPaginate && (
+            <div className="transactionTable__pager">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-2 py-1 rounded border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
+                className="transactionTable__pageBtn transactionTable__pageBtn--nav"
               >
                 Anterior
               </button>
 
               {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-2 py-1 rounded border ${
-                      currentPage === page
-                        ? "border-indigo-300 bg-indigo-100 text-indigo-700"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ),
+                (page) => {
+                  const tone =
+                    currentPage === page
+                      ? "transactionTable__pageBtn--active"
+                      : "transactionTable__pageBtn--idle";
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`transactionTable__pageBtn ${tone}`}
+                    >
+                      {page}
+                    </button>
+                  );
+                },
               )}
 
               <button
@@ -296,23 +301,25 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
-                className="px-2 py-1 rounded border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
+                className="transactionTable__pageBtn transactionTable__pageBtn--nav"
               >
-                Próxima
+                PrÃ³xima
               </button>
             </div>
           )}
         </div>
-        <div className="flex items-center justify-end gap-4">
-          <span className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> RECEITAs
+
+        <div className="transactionTable__summary">
+          <span className="transactionTable__summaryItem">
+            <span className="transactionTable__miniDot transactionTable__miniDot--income" />{" "}
+            RECEITAs
           </span>
-          <span className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Despesas
+          <span className="transactionTable__summaryItem">
+            <span className="transactionTable__miniDot transactionTable__miniDot--expense" />{" "}
+            Despesas
           </span>
         </div>
       </div>
     </section>
   );
 };
-

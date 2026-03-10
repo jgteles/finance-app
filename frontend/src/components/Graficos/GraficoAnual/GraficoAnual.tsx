@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from "recharts";
 import { parseAppDate, formatCurrency } from "@/utils";
+import "./GraficoAnual.css";
 
 interface Transaction {
   date: string;
@@ -116,48 +117,43 @@ export const RevenueOverviewChart: React.FC<Props> = ({ transactions }) => {
       ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
       : null;
 
+  const growthTone =
+    growth === null
+      ? null
+      : growth >= 0
+        ? "graficoAnual__badge--positive"
+        : "graficoAnual__badge--negative";
+
   return (
-    <section className="h-[420px] rounded-2xl border border-slate-800 bg-gradient-to-b from-[#07163b] to-[#060f2d] p-5 text-slate-100 shadow-sm md:p-6">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-slate-300">
-            Saldo acumulado
-          </p>
-          <div className="mt-1 flex items-center gap-2">
-            <h3 className="text-2xl font-semibold text-white">
-              {formatCurrency(totalRevenue)}
-            </h3>
-            {growth !== null && (
-              <span
-                className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
-                  growth >= 0
-                    ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-rose-500/20 text-rose-300"
-                }`}
-              >
-                {growth >= 0 ? "+" : ""}
-                {growth.toFixed(1)}%
+    <section className="graficoAnual__container">
+      <div className="graficoAnual__header">
+        <div className="graficoAnual__summary">
+          <p className="graficoAnual__kicker">Saldo acumulado</p>
+          <div className="graficoAnual__valueRow">
+            <h3 className="graficoAnual__value">{formatCurrency(totalRevenue)}</h3>
+            {growthTone && (
+              <span className={`graficoAnual__badge ${growthTone}`}>
+                {growth! >= 0 ? "+" : ""}
+                {growth!.toFixed(1)}%
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-xs text-slate-300">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-violet-400" />
+        <div className="graficoAnual__legend">
+          <span className="graficoAnual__legendItem">
+            <span className="graficoAnual__dot graficoAnual__dot--revenue" />
             Saldo acumulado
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-cyan-400" />
+          <span className="graficoAnual__legendItem">
+            <span className="graficoAnual__dot graficoAnual__dot--expense" />
             Saldo bruto do mes
           </span>
-          <span className="rounded border border-slate-700 px-2 py-1 text-[11px] text-slate-300">
-            Jan {currentYear}
-          </span>
+          <span className="graficoAnual__year">{currentYear}</span>
         </div>
       </div>
 
-      <div className="h-[320px]">
+      <div className="graficoAnual__chart">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="#1f2d58" strokeDasharray="3 3" vertical={false} />

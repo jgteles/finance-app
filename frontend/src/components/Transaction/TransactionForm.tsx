@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { Transaction, TransactionType } from "@/types";
 import { TRANSACTION_CATEGORIES } from "@/src/constants";
 import { toDateInputValue } from "@/utils";
+import "./TransactionForm.css";
 
 interface TransactionFormProps {
   onAdd: (transaction: Omit<Transaction, "id">) => void;
@@ -32,47 +33,50 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd }) => {
     setCategory("");
   };
 
+  const receitaTone =
+    type === "Receita"
+      ? "transactionForm__typeBtn--active transactionForm__typeBtn--income"
+      : "transactionForm__typeBtn--inactive";
+
+  const despesaTone =
+    type === "Despesa"
+      ? "transactionForm__typeBtn--active transactionForm__typeBtn--expense"
+      : "transactionForm__typeBtn--inactive";
+
   return (
-    <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-        <Plus size={20} className="text-indigo-600" />
+    <section className="transactionForm__card">
+      <h3 className="transactionForm__title">
+        <Plus size={20} className="transactionForm__titleIcon" />
         Nova Transação
       </h3>
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end"
-      >
-        <div className="space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase">
-            Data
-          </label>
+      <form onSubmit={handleSubmit} className="transactionForm__grid">
+        <div className="transactionForm__field">
+          <label className="transactionForm__label">Data</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="transactionForm__control"
           />
         </div>
-        <div className="md:col-span-2 space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase">
-            Descrição
-          </label>
+
+        <div className="transactionForm__field transactionForm__field--description">
+          <label className="transactionForm__label">Descrição</label>
           <input
             type="text"
             placeholder="Ex: Assinatura Netflix"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="transactionForm__control"
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase">
-            Categoria
-          </label>
+
+        <div className="transactionForm__field">
+          <label className="transactionForm__label">Categoria</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="transactionForm__control"
           >
             <option value="">Selecione uma categoria</option>
             {TRANSACTION_CATEGORIES.map((cat) => (
@@ -82,45 +86,43 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onAdd }) => {
             ))}
           </select>
         </div>
-        <div className="space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase">
-            Valor (R$)
-          </label>
+
+        <div className="transactionForm__field">
+          <label className="transactionForm__label">Valor (R$)</label>
           <input
             type="number"
             step="0.01"
             placeholder="0,00"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="transactionForm__control"
           />
         </div>
-        <div className="space-y-1 flex flex-col">
-          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+
+        <div className="transactionForm__field transactionForm__field--type">
+          <label className="transactionForm__label transactionForm__label--spaced">
             Tipo
           </label>
-          <div className="flex bg-slate-100 p-1 rounded-lg">
+          <div className="transactionForm__typeGroup">
             <button
               type="button"
               onClick={() => setType("Receita")}
-              className={`flex-1 text-[10px] py-1.5 rounded-md transition-all ${type === "Receita" ? "bg-white shadow-sm text-emerald-600 font-bold" : "text-slate-500 font-medium"}`}
+              className={`transactionForm__typeBtn ${receitaTone}`}
             >
               Receita
             </button>
             <button
               type="button"
               onClick={() => setType("Despesa")}
-              className={`flex-1 text-[10px] py-1.5 rounded-md transition-all ${type === "Despesa" ? "bg-white shadow-sm text-rose-600 font-bold" : "text-slate-500 font-medium"}`}
+              className={`transactionForm__typeBtn ${despesaTone}`}
             >
               Despesa
             </button>
           </div>
         </div>
-        <div className="lg:col-start-6">
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 transition-shadow shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-          >
+
+        <div className="transactionForm__submitCell">
+          <button type="submit" className="transactionForm__submitBtn">
             <Plus size={18} />
             Adicionar
           </button>
