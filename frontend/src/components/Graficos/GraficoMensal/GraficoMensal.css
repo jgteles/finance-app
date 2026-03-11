@@ -126,3 +126,36 @@
 .graficoMensal__tooltipValue--negative {
   color: #dc2626; /* red-600 */
 }
+
+:root.theme-dark .graficoMensal__container {
+  background: #020617; /* slate-950 */
+  border-color: #1f2937; /* slate-800 */
+}
+
+:root.theme-dark .graficoMensal__title {
+  color: #e5e7eb; /* slate-200 */
+}
+
+:root.theme-dark .graficoMensal__monthInput {
+  background: #020617;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+:root.theme-dark .graficoMensal__exportBtn {
+  background: #4f46e5;
+}
+
+:root.theme-dark .graficoMensal__tooltip {
+  background: rgba(15, 23, 42, 0.98);
+  border-color: #1f2937;
+}
+
+:root.theme-dark .graficoMensal__tooltipTitle {
+  border-bottom-color: #1f2937;
+  color: #e5e7eb;
+}
+
+:root.theme-dark .graficoMensal__tooltipRow {
+  color: #e5e7eb;
+}

@@ -56,3 +56,23 @@
 .transacoesPage__table {
   margin-top: 2rem; /* mt-8 */
 }
+
+:root.theme-dark .transacoesPage__root {
+  background: #020617; /* slate-950 */
+  color: #e2e8f0; /* slate-200 */
+}
+
+:root.theme-dark .transacoesPage__tab--active {
+  background: #e5e7eb;
+  color: #020617;
+}
+
+:root.theme-dark .transacoesPage__tab--inactive {
+  border-color: #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+}
+
+:root.theme-dark .transacoesPage__tab--inactive:hover {
+  background: #111827;
+}

@@ -147,3 +147,35 @@
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
     0 4px 6px -4px rgb(0 0 0 / 0.1); /* hover:shadow-lg */
 }
+
+:root.theme-dark .transactionForm__card {
+  background: #020617; /* slate-950 */
+  border-color: #1f2937; /* slate-800 */
+}
+
+:root.theme-dark .transactionForm__title {
+  color: #e5e7eb; /* slate-200 */
+}
+
+:root.theme-dark .transactionForm__label {
+  color: #9ca3af; /* slate-400 */
+}
+
+:root.theme-dark .transactionForm__control {
+  background: #020617;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
+:root.theme-dark .transactionForm__typeGroup {
+  background: #020617;
+}
+
+:root.theme-dark .transactionForm__typeBtn--inactive {
+  color: #9ca3af;
+}
+
+:root.theme-dark .transactionForm__submitBtn {
+  background: #4f46e5;
+  color: #e5e7eb;
+}

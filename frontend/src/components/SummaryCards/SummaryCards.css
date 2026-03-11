@@ -77,3 +77,31 @@
   background: #fff1f2; /* rose-50 */
   color: #e11d48; /* rose-600 */
 }
+
+:root.theme-dark .summaryCards__card {
+  background: #020617; /* slate-950 */
+  border-color: #1f2937; /* slate-800 */
+}
+
+:root.theme-dark .summaryCards__label {
+  color: #9ca3af; /* slate-400 */
+}
+
+:root.theme-dark .summaryCards__value--neutral {
+  color: #e5e7eb; /* slate-200 */
+}
+
+:root.theme-dark .summaryCards__icon--wallet {
+  background: #020617;
+  color: #9ca3af;
+}
+
+:root.theme-dark .summaryCards__icon--income {
+  background: rgba(16, 185, 129, 0.12);
+  color: #6ee7b7;
+}
+
+:root.theme-dark .summaryCards__icon--expense {
+  background: rgba(244, 63, 94, 0.12);
+  color: #fecaca;
+}

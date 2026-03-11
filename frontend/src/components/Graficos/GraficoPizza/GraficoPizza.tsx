@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/utils";
+import { useTheme } from "@/src/context/ThemeContext";
 
 
 interface Transaction {
@@ -24,6 +25,8 @@ const COLORS = [
 ];
 
 export const CategoryPieChart: React.FC<Props> = ({ transactions }) => {
+  const { theme } = useTheme();
+
   const data = useMemo(() => {
     const grouped: Record<string, number> = transactions.reduce((acc, t) => {
       const category = t.category?.trim() || "Sem categoria";
@@ -41,14 +44,32 @@ export const CategoryPieChart: React.FC<Props> = ({ transactions }) => {
     [data],
   );
 
+  const containerClass =
+    theme === "dark"
+      ? "flex h-[420px] flex-col rounded-xl border border-slate-800 bg-slate-950 p-6 shadow-sm"
+      : "flex h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm";
+
+  const titleClass =
+    theme === "dark"
+      ? "text-lg font-semibold mb-4 text-slate-100"
+      : "text-lg font-semibold mb-4 text-slate-800";
+
+  const emptyTextClass =
+    theme === "dark"
+      ? "min-h-0 flex-1 flex items-center justify-center text-slate-500"
+      : "min-h-0 flex-1 flex items-center justify-center text-slate-400";
+
+  const totalTextClass =
+    theme === "dark"
+      ? "mt-3 text-sm text-slate-400"
+      : "mt-3 text-sm text-slate-500";
+
   return (
-    <div className="flex h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold mb-4 text-slate-800">
-        Distribuição por Categoria
-      </h3>
+    <div className={containerClass}>
+      <h3 className={titleClass}>Distribuição por Categoria</h3>
 
       {data.length === 0 ? (
-        <div className="min-h-0 flex-1 flex items-center justify-center text-slate-400">
+        <div className={emptyTextClass}>
           Sem dados para exibir.
         </div>
       ) : (
@@ -75,15 +96,26 @@ export const CategoryPieChart: React.FC<Props> = ({ transactions }) => {
 
               <Tooltip
                 formatter={(value: number) => formatCurrency(value)}
-                contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0" }}
+                contentStyle={{
+                  borderRadius: 12,
+                  borderColor: theme === "dark" ? "#1f2937" : "#e2e8f0",
+                  background: theme === "dark" ? "#020617" : "#ffffff",
+                  color: theme === "dark" ? "#e5e7eb" : "#0f172a",
+                }}
               />
-              <Legend verticalAlign="bottom" height={36} />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                wrapperStyle={{
+                  color: theme === "dark" ? "#e5e7eb" : "#0f172a",
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      <p className="mt-3 text-sm text-slate-500">Total: {formatCurrency(total)}</p>
+      <p className={totalTextClass}>Total: {formatCurrency(total)}</p>
     </div>
   );
 };
