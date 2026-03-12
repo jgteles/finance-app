@@ -7,6 +7,7 @@ import { SummaryCards } from "@/src/components/SummaryCards/SummaryCards";
 import { MonthlyDetailedChart } from "@/src/components/Graficos/GraficoMensal/GraficoMensal";
 import { CategoryPieChart } from "@/src/components/Graficos/GraficoPizza/GraficoPizza";
 import { RevenueOverviewChart } from "@/src/components/Graficos/GraficoAnual/GraficoAnual";
+import { PiggyBanksPanel } from "@/frontend/src/components/PiggyBanks/PiggyBanksPanel";
 import { useLogin } from "@/src/context/LoginContext";
 import { parseAppDate, toMonthInputValue, formatCurrency } from "@/utils";
 import {
@@ -156,6 +157,7 @@ export default function DashboardAnalytics() {
         </div>
 
         <SummaryCards totals={totals} />
+        <PiggyBanksPanel />
 
         <div className="dashboardPage__grid">
           <div className="dashboardPage__col dashboardPage__col--8">
