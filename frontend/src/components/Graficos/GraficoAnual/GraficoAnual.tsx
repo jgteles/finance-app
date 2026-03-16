@@ -79,12 +79,17 @@ export const RevenueOverviewChart: React.FC<Props> = ({ transactions }) => {
   const { totalRevenue, previousRevenue } = useMemo(() => {
     const thisYear = MONTHS.map(() => ({ income: 0, expense: 0 }));
     const lastYear = MONTHS.map(() => ({ income: 0, expense: 0 }));
+    let maxMonthThisYear: number | null = null;
 
     transactions.forEach((transaction) => {
-      const year = parseAppDate(transaction.date).getFullYear();
-      const month = parseAppDate(transaction.date).getMonth();
+      const parsed = parseAppDate(transaction.date);
+      const year = parsed.getFullYear();
+      const month = parsed.getMonth();
 
       if (year === currentYear) {
+        if (maxMonthThisYear === null || month > maxMonthThisYear) {
+          maxMonthThisYear = month;
+        }
         if (transaction.type === "Receita") {
           thisYear[month].income += Number(transaction.value);
         } else {
@@ -101,10 +106,13 @@ export const RevenueOverviewChart: React.FC<Props> = ({ transactions }) => {
       }
     });
 
+    // If there's no data for the current year, fall back to the current month (old behavior).
+    const endMonthIndex = maxMonthThisYear ?? currentMonthIndex;
+
     let thisYearBalance = 0;
     let lastYearBalance = 0;
 
-    for (let month = 0; month <= currentMonthIndex; month += 1) {
+    for (let month = 0; month <= endMonthIndex; month += 1) {
       thisYearBalance += thisYear[month].income - thisYear[month].expense;
       lastYearBalance += lastYear[month].income - lastYear[month].expense;
     }
@@ -113,8 +121,8 @@ export const RevenueOverviewChart: React.FC<Props> = ({ transactions }) => {
   }, [transactions, currentMonthIndex, currentYear, previousYear]);
 
   const growth =
-    previousRevenue > 0
-      ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
+    previousRevenue !== 0
+      ? ((totalRevenue - previousRevenue) / Math.abs(previousRevenue)) * 100
       : null;
 
   const growthTone =

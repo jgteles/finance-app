@@ -15,12 +15,14 @@ interface PiggyBanksContextType {
   piggyBanks: PiggyBank[];
   isLoading: boolean;
   refreshPiggyBanks: () => Promise<void>;
-  addPiggyBank: (data: Omit<PiggyBank, "id">) => Promise<void>;
+  addPiggyBank: (data: Pick<PiggyBank, "name" | "color" | "target_amount">) => Promise<void>;
   updatePiggyBank: (
     id: number,
     data: Partial<Omit<PiggyBank, "id">>,
   ) => Promise<void>;
   removePiggyBank: (id: number) => Promise<void>;
+  depositPiggyBank: (id: number, amount: number) => Promise<void>;
+  withdrawPiggyBank: (id: number, amount: number) => Promise<void>;
 }
 
 const PiggyBanksContext = createContext<PiggyBanksContextType | undefined>(
@@ -31,6 +33,19 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useLogin();
   const [piggyBanks, setPiggyBanks] = useState<PiggyBank[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const normalizePiggyBank = useCallback((raw: any): PiggyBank => {
+    return {
+      id: Number(raw?.id),
+      name: String(raw?.name ?? ""),
+      color: String(raw?.color ?? "#22c55e"),
+      balance: Number(raw?.balance ?? 0),
+      target_amount:
+        raw?.target_amount == null ? null : Number(raw?.target_amount),
+      created_at: raw?.created_at,
+      updated_at: raw?.updated_at,
+    };
+  }, []);
 
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("token");
@@ -68,12 +83,12 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (Array.isArray(data)) {
-        setPiggyBanks(data);
+        setPiggyBanks(data.map(normalizePiggyBank));
         return;
       }
 
       if (Array.isArray(data.results)) {
-        setPiggyBanks(data.results);
+        setPiggyBanks(data.results.map(normalizePiggyBank));
         return;
       }
 
@@ -84,7 +99,7 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [getAuthHeaders, logout]);
+  }, [getAuthHeaders, logout, normalizePiggyBank]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -95,7 +110,9 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
     refreshPiggyBanks();
   }, [isAuthenticated, refreshPiggyBanks]);
 
-  const addPiggyBank = async (data: Omit<PiggyBank, "id">) => {
+  const addPiggyBank = async (
+    data: Pick<PiggyBank, "name" | "color" | "target_amount">,
+  ) => {
     try {
       const response = await fetch(`${BASE_URL}/piggy-banks/`, {
         method: "POST",
@@ -109,7 +126,15 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
       }
 
       if (!response.ok) {
-        throw new Error(`Erro ao criar cofrinho: ${response.status}`);
+        const body = await response.json().catch(() => null);
+        const message =
+          body?.error ??
+          body?.detail ??
+          (body && typeof body === "object"
+            ? JSON.stringify(body)
+            : null) ??
+          `Erro ao criar cofrinho: ${response.status}`;
+        throw new Error(message);
       }
 
       await refreshPiggyBanks();
@@ -169,6 +194,58 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const depositPiggyBank = async (id: number, amount: number) => {
+    try {
+      const response = await fetch(`${BASE_URL}/piggy-banks/${id}/deposit/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ amount }),
+      });
+
+      if (response.status === 401) {
+        logout();
+        return;
+      }
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? `Erro ao depositar: ${response.status}`);
+      }
+
+      const updated = normalizePiggyBank(await response.json());
+      setPiggyBanks((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    } catch (err) {
+      console.error("depositPiggyBank error:", err);
+      throw err;
+    }
+  };
+
+  const withdrawPiggyBank = async (id: number, amount: number) => {
+    try {
+      const response = await fetch(`${BASE_URL}/piggy-banks/${id}/withdraw/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ amount }),
+      });
+
+      if (response.status === 401) {
+        logout();
+        return;
+      }
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? `Erro ao retirar: ${response.status}`);
+      }
+
+      const updated = normalizePiggyBank(await response.json());
+      setPiggyBanks((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    } catch (err) {
+      console.error("withdrawPiggyBank error:", err);
+      throw err;
+    }
+  };
+
   return (
     <PiggyBanksContext.Provider
       value={{
@@ -178,6 +255,8 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
         addPiggyBank,
         updatePiggyBank,
         removePiggyBank,
+        depositPiggyBank,
+        withdrawPiggyBank,
       }}
     >
       {children}

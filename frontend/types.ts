@@ -14,3 +14,13 @@ export interface Totals {
   expense: number;
   balance: number;
 }
+
+export interface PiggyBank {
+  id: number;
+  name: string;
+  color: string;
+  balance: number;
+  target_amount?: number | null;
+  created_at?: string;
+  updated_at?: string;
+}
