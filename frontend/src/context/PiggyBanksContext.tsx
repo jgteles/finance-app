@@ -7,7 +7,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { useLogin } from "./LoginContext";
-import type { PiggyBank } from "@/types";
+import type { PiggyBank, PiggyBankMovement } from "@/types";
 
 const BASE_URL = "http://127.0.0.1:8000/api";
 
@@ -23,6 +23,8 @@ interface PiggyBanksContextType {
   removePiggyBank: (id: number) => Promise<void>;
   depositPiggyBank: (id: number, amount: number) => Promise<void>;
   withdrawPiggyBank: (id: number, amount: number) => Promise<void>;
+  fetchPiggyBankMovements: (id: number) => Promise<PiggyBankMovement[]>;
+  deletePiggyBankMovement: (piggyId: number, movementId: number) => Promise<void>;
 }
 
 const PiggyBanksContext = createContext<PiggyBanksContextType | undefined>(
@@ -44,6 +46,16 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
         raw?.target_amount == null ? null : Number(raw?.target_amount),
       created_at: raw?.created_at,
       updated_at: raw?.updated_at,
+    };
+  }, []);
+
+  const normalizeMovement = useCallback((raw: any): PiggyBankMovement => {
+    return {
+      id: Number(raw?.id),
+      movement_type: String(raw?.movement_type ?? "") as PiggyBankMovement["movement_type"],
+      amount: Number(raw?.amount ?? 0),
+      balance_after: Number(raw?.balance_after ?? 0),
+      created_at: String(raw?.created_at ?? ""),
     };
   }, []);
 
@@ -246,6 +258,50 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchPiggyBankMovements = async (id: number) => {
+    const response = await fetch(`${BASE_URL}/piggy-banks/${id}/movements/`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (response.status === 401) {
+      logout();
+      return [];
+    }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const message =
+        body?.error ?? body?.detail ?? `Erro ao buscar movimentações: ${response.status}`;
+      throw new Error(message);
+    }
+
+    const data = await response.json();
+    const list = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+    return list.map(normalizeMovement);
+  };
+
+  const deletePiggyBankMovement = async (piggyId: number, movementId: number) => {
+    const response = await fetch(
+      `${BASE_URL}/piggy-banks/${piggyId}/movements/${movementId}/`,
+      {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      },
+    );
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const message =
+        body?.error ?? body?.detail ?? `Erro ao apagar movimentação: ${response.status}`;
+      throw new Error(message);
+    }
+  };
+
   return (
     <PiggyBanksContext.Provider
       value={{
@@ -257,6 +313,8 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
         removePiggyBank,
         depositPiggyBank,
         withdrawPiggyBank,
+        fetchPiggyBankMovements,
+        deletePiggyBankMovement,
       }}
     >
       {children}

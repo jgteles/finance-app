@@ -32,3 +32,26 @@ class PiggyBank(models.Model):
     def __str__(self) -> str:
         return f"{self.name} ({self.user.username})"
 
+
+class PiggyBankMovement(models.Model):
+    class MovementType(models.TextChoices):
+        DEPOSIT = "DEPOSIT", "Deposit"
+        WITHDRAW = "WITHDRAW", "Withdraw"
+
+    piggy_bank = models.ForeignKey(
+        PiggyBank,
+        on_delete=models.CASCADE,
+        related_name="movements",
+    )
+
+    movement_type = models.CharField(max_length=16, choices=MovementType.choices)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.piggy_bank.name} {self.movement_type} {self.amount}"

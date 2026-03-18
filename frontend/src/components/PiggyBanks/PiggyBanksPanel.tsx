@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { usePiggyBanks } from "@/src/hooks/usePiggyBanks";
 import { formatCurrency } from "@/utils";
+import type { PiggyBank, PiggyBankMovement } from "@/types";
+import { Eye, Trash2, X } from "lucide-react";
 import "./PiggyBanksPanel.css";
 
 export const PiggyBanksPanel: React.FC = () => {
@@ -10,6 +12,9 @@ export const PiggyBanksPanel: React.FC = () => {
     removePiggyBank,
     depositPiggyBank,
     withdrawPiggyBank,
+    fetchPiggyBankMovements,
+    deletePiggyBankMovement,
+    refreshPiggyBanks,
     isLoading,
   } = usePiggyBanks();
 
@@ -17,6 +22,11 @@ export const PiggyBanksPanel: React.FC = () => {
   const [color, setColor] = useState("#22c55e");
   const [targetAmount, setTargetAmount] = useState<string>("");
   const [adjustById, setAdjustById] = useState<Record<number, string>>({});
+
+  const [movementsPiggy, setMovementsPiggy] = useState<PiggyBank | null>(null);
+  const [movements, setMovements] = useState<PiggyBankMovement[]>([]);
+  const [movementsLoading, setMovementsLoading] = useState(false);
+  const [movementsError, setMovementsError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -62,6 +72,57 @@ export const PiggyBanksPanel: React.FC = () => {
       setAdjustById((prev) => ({ ...prev, [id]: "" }));
     } catch (err: any) {
       alert(err?.message ?? "Erro ao retirar");
+    }
+  };
+
+  const formatMovementDate = (iso: string) => {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleString("pt-BR");
+  };
+
+  const openMovements = async (piggy: PiggyBank) => {
+    setMovementsPiggy(piggy);
+    setMovements([]);
+    setMovementsError(null);
+    setMovementsLoading(true);
+
+    try {
+      const data = await fetchPiggyBankMovements(piggy.id);
+      setMovements(data);
+    } catch (err: any) {
+      setMovementsError(err?.message ?? "Erro ao buscar movimentações");
+    } finally {
+      setMovementsLoading(false);
+    }
+  };
+
+  const closeMovements = () => {
+    setMovementsPiggy(null);
+    setMovements([]);
+    setMovementsError(null);
+    setMovementsLoading(false);
+  };
+
+  const handleDeleteMovement = async (movementId: number) => {
+    if (!movementsPiggy) return;
+    const ok = window.confirm(
+      "Apagar esta movimentação? O saldo do cofrinho será recalculado.",
+    );
+    if (!ok) return;
+
+    setMovementsError(null);
+    setMovementsLoading(true);
+
+    try {
+      await deletePiggyBankMovement(movementsPiggy.id, movementId);
+      await refreshPiggyBanks();
+      const data = await fetchPiggyBankMovements(movementsPiggy.id);
+      setMovements(data);
+    } catch (err: any) {
+      setMovementsError(err?.message ?? "Erro ao apagar movimentação");
+    } finally {
+      setMovementsLoading(false);
     }
   };
 
@@ -157,13 +218,25 @@ export const PiggyBanksPanel: React.FC = () => {
 	                  </div>
 	                </div>
 
-	                <button
-	                  type="button"
-	                  className="piggyPanel__remove"
-	                  onClick={() => removePiggyBank(piggy.id)}
-	                >
-	                  Remover
-	                </button>
+                  <div className="piggyPanel__topActions">
+                    <button
+                      type="button"
+                      className="piggyPanel__view"
+                      onClick={() => openMovements(piggy)}
+                      aria-label={`Ver movimentações do cofrinho ${piggy.name}`}
+                      title="Ver movimentações"
+                    >
+                      <Eye size={18} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="piggyPanel__remove"
+                      onClick={() => removePiggyBank(piggy.id)}
+                    >
+                      Remover
+                    </button>
+                  </div>
 	              </div>
 
 	              {(piggy as any).target_amount != null &&
@@ -219,6 +292,113 @@ export const PiggyBanksPanel: React.FC = () => {
 	          ))}
 	        </div>
 	      </div>
+
+        {movementsPiggy && (
+          <div
+            className="piggyPanel__modalOverlay"
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) closeMovements();
+            }}
+          >
+            <div className="piggyPanel__modal" onMouseDown={(e) => e.stopPropagation()}>
+              <header className="piggyPanel__modalHeader">
+                <div className="piggyPanel__modalTitleWrap">
+                  <p className="piggyPanel__modalKicker">Movimentações</p>
+                  <h4 className="piggyPanel__modalTitle">{movementsPiggy.name}</h4>
+                </div>
+
+                <button
+                  type="button"
+                  className="piggyPanel__modalClose"
+                  onClick={closeMovements}
+                  aria-label="Fechar"
+                >
+                  <X size={18} />
+                </button>
+              </header>
+
+              <div className="piggyPanel__modalBody">
+                {movementsLoading && (
+                  <p className="piggyPanel__modalState">Carregando movimentações...</p>
+                )}
+
+                {!movementsLoading && movementsError && (
+                  <p className="piggyPanel__modalState piggyPanel__modalState--error">
+                    {movementsError}
+                  </p>
+                )}
+
+                {!movementsLoading && !movementsError && movements.length === 0 && (
+                  <p className="piggyPanel__modalState">
+                    Nenhuma movimentação registrada ainda.
+                  </p>
+                )}
+
+                {!movementsLoading && !movementsError && movements.length > 0 && (
+                  <ul className="piggyPanel__movementList">
+                    {movements.map((m) => {
+                      const isDeposit = m.movement_type === "DEPOSIT";
+                      const label = isDeposit ? "Aporte" : "Retirada";
+                      const signedAmount = `${isDeposit ? "+" : "-"} ${formatCurrency(
+                        Number(m.amount ?? 0),
+                      )}`;
+
+                      return (
+                        <li key={m.id} className="piggyPanel__movementItem">
+                          <div className="piggyPanel__movementLeft">
+                            <span
+                              className={
+                                "piggyPanel__movementBadge " +
+                                (isDeposit
+                                  ? "piggyPanel__movementBadge--deposit"
+                                  : "piggyPanel__movementBadge--withdraw")
+                              }
+                            >
+                              {label}
+                            </span>
+                            <span className="piggyPanel__movementDate">
+                              {formatMovementDate(m.created_at)}
+                            </span>
+                          </div>
+
+                          <div className="piggyPanel__movementRight">
+                            <div className="piggyPanel__movementTopRight">
+                              <span
+                                className={
+                                  "piggyPanel__movementAmount " +
+                                  (isDeposit
+                                    ? "piggyPanel__movementAmount--deposit"
+                                    : "piggyPanel__movementAmount--withdraw")
+                                }
+                              >
+                                {signedAmount}
+                              </span>
+                              <button
+                                type="button"
+                                className="piggyPanel__movementDelete"
+                                onClick={() => handleDeleteMovement(m.id)}
+                                aria-label="Apagar movimentação"
+                                title="Apagar movimentação"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+
+                            <span className="piggyPanel__movementBalance">
+                              Saldo após: {formatCurrency(Number(m.balance_after ?? 0))}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 	    </section>
 	  );
 	};

@@ -24,3 +24,13 @@ export interface PiggyBank {
   created_at?: string;
   updated_at?: string;
 }
+
+export type PiggyBankMovementType = "DEPOSIT" | "WITHDRAW";
+
+export interface PiggyBankMovement {
+  id: number;
+  movement_type: PiggyBankMovementType;
+  amount: number;
+  balance_after: number;
+  created_at: string;
+}
