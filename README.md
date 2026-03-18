@@ -248,10 +248,6 @@ docker-compose down
 - [Django REST Framework](https://www.django-rest-framework.org/)
 - [Vite Guide](https://vitejs.dev/)
 
-## 📄 License
-
-Este projeto é licenciado sob a MIT License.
-
 ## 👤 Autor
 
 João Guilherme
