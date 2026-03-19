@@ -439,7 +439,7 @@
   display: grid;
   place-items: center;
   padding: 1.25rem;
-  z-index: 50;
+  z-index: 9999;
 }
 
 .piggyPanel__modal {

@@ -54,6 +54,7 @@
 }
 
 .dashboardPage__grid {
+  margin-top: 2.25rem;
   display: grid;
   grid-template-columns: 1fr; /* grid-cols-1 */
   gap: 1.5rem; /* gap-6 */

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { usePiggyBanks } from "@/src/hooks/usePiggyBanks";
 import { formatCurrency } from "@/utils";
 import type { PiggyBank, PiggyBankMovement } from "@/types";
@@ -293,112 +294,114 @@ export const PiggyBanksPanel: React.FC = () => {
 	        </div>
 	      </div>
 
-        {movementsPiggy && (
-          <div
-            className="piggyPanel__modalOverlay"
-            role="dialog"
-            aria-modal="true"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) closeMovements();
-            }}
-          >
-            <div className="piggyPanel__modal" onMouseDown={(e) => e.stopPropagation()}>
-              <header className="piggyPanel__modalHeader">
-                <div className="piggyPanel__modalTitleWrap">
-                  <p className="piggyPanel__modalKicker">Movimentações</p>
-                  <h4 className="piggyPanel__modalTitle">{movementsPiggy.name}</h4>
-                </div>
+        {movementsPiggy &&
+          createPortal(
+            <div
+              className="piggyPanel__modalOverlay"
+              role="dialog"
+              aria-modal="true"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) closeMovements();
+              }}
+            >
+              <div className="piggyPanel__modal" onMouseDown={(e) => e.stopPropagation()}>
+                <header className="piggyPanel__modalHeader">
+                  <div className="piggyPanel__modalTitleWrap">
+                    <p className="piggyPanel__modalKicker">Movimentações</p>
+                    <h4 className="piggyPanel__modalTitle">{movementsPiggy.name}</h4>
+                  </div>
 
-                <button
-                  type="button"
-                  className="piggyPanel__modalClose"
-                  onClick={closeMovements}
-                  aria-label="Fechar"
-                >
-                  <X size={18} />
-                </button>
-              </header>
+                  <button
+                    type="button"
+                    className="piggyPanel__modalClose"
+                    onClick={closeMovements}
+                    aria-label="Fechar"
+                  >
+                    <X size={18} />
+                  </button>
+                </header>
 
-              <div className="piggyPanel__modalBody">
-                {movementsLoading && (
-                  <p className="piggyPanel__modalState">Carregando movimentações...</p>
-                )}
+                <div className="piggyPanel__modalBody">
+                  {movementsLoading && (
+                    <p className="piggyPanel__modalState">Carregando movimentações...</p>
+                  )}
 
-                {!movementsLoading && movementsError && (
-                  <p className="piggyPanel__modalState piggyPanel__modalState--error">
-                    {movementsError}
-                  </p>
-                )}
+                  {!movementsLoading && movementsError && (
+                    <p className="piggyPanel__modalState piggyPanel__modalState--error">
+                      {movementsError}
+                    </p>
+                  )}
 
-                {!movementsLoading && !movementsError && movements.length === 0 && (
-                  <p className="piggyPanel__modalState">
-                    Nenhuma movimentação registrada ainda.
-                  </p>
-                )}
+                  {!movementsLoading && !movementsError && movements.length === 0 && (
+                    <p className="piggyPanel__modalState">
+                      Nenhuma movimentação registrada ainda.
+                    </p>
+                  )}
 
-                {!movementsLoading && !movementsError && movements.length > 0 && (
-                  <ul className="piggyPanel__movementList">
-                    {movements.map((m) => {
-                      const isDeposit = m.movement_type === "DEPOSIT";
-                      const label = isDeposit ? "Aporte" : "Retirada";
-                      const signedAmount = `${isDeposit ? "+" : "-"} ${formatCurrency(
-                        Number(m.amount ?? 0),
-                      )}`;
+                  {!movementsLoading && !movementsError && movements.length > 0 && (
+                    <ul className="piggyPanel__movementList">
+                      {movements.map((m) => {
+                        const isDeposit = m.movement_type === "DEPOSIT";
+                        const label = isDeposit ? "Aporte" : "Retirada";
+                        const signedAmount = `${isDeposit ? "+" : "-"} ${formatCurrency(
+                          Number(m.amount ?? 0),
+                        )}`;
 
-                      return (
-                        <li key={m.id} className="piggyPanel__movementItem">
-                          <div className="piggyPanel__movementLeft">
-                            <span
-                              className={
-                                "piggyPanel__movementBadge " +
-                                (isDeposit
-                                  ? "piggyPanel__movementBadge--deposit"
-                                  : "piggyPanel__movementBadge--withdraw")
-                              }
-                            >
-                              {label}
-                            </span>
-                            <span className="piggyPanel__movementDate">
-                              {formatMovementDate(m.created_at)}
-                            </span>
-                          </div>
-
-                          <div className="piggyPanel__movementRight">
-                            <div className="piggyPanel__movementTopRight">
+                        return (
+                          <li key={m.id} className="piggyPanel__movementItem">
+                            <div className="piggyPanel__movementLeft">
                               <span
                                 className={
-                                  "piggyPanel__movementAmount " +
+                                  "piggyPanel__movementBadge " +
                                   (isDeposit
-                                    ? "piggyPanel__movementAmount--deposit"
-                                    : "piggyPanel__movementAmount--withdraw")
+                                    ? "piggyPanel__movementBadge--deposit"
+                                    : "piggyPanel__movementBadge--withdraw")
                                 }
                               >
-                                {signedAmount}
+                                {label}
                               </span>
-                              <button
-                                type="button"
-                                className="piggyPanel__movementDelete"
-                                onClick={() => handleDeleteMovement(m.id)}
-                                aria-label="Apagar movimentação"
-                                title="Apagar movimentação"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                              <span className="piggyPanel__movementDate">
+                                {formatMovementDate(m.created_at)}
+                              </span>
                             </div>
 
-                            <span className="piggyPanel__movementBalance">
-                              Saldo após: {formatCurrency(Number(m.balance_after ?? 0))}
-                            </span>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                            <div className="piggyPanel__movementRight">
+                              <div className="piggyPanel__movementTopRight">
+                                <span
+                                  className={
+                                    "piggyPanel__movementAmount " +
+                                    (isDeposit
+                                      ? "piggyPanel__movementAmount--deposit"
+                                      : "piggyPanel__movementAmount--withdraw")
+                                  }
+                                >
+                                  {signedAmount}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="piggyPanel__movementDelete"
+                                  onClick={() => handleDeleteMovement(m.id)}
+                                  aria-label="Apagar movimentação"
+                                  title="Apagar movimentação"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+
+                              <span className="piggyPanel__movementBalance">
+                                Saldo após: {formatCurrency(Number(m.balance_after ?? 0))}
+                              </span>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </div>,
+            document.body,
+          )}
 	    </section>
 	  );
 	};
