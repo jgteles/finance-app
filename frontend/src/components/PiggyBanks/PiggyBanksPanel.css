@@ -464,6 +464,42 @@
     linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.7));
 }
 
+.piggyPanel__modalActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.piggyPanel__modalDownload {
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.9);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 900;
+  color: #334155; /* slate-700 */
+  transition: background-color 160ms ease, transform 160ms ease, border-color 160ms ease;
+}
+
+.piggyPanel__modalDownload:hover {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.28);
+  transform: translateY(-1px);
+}
+
+.piggyPanel__modalDownload:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.piggyPanel__modalDownload:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+}
+
 .piggyPanel__modalKicker {
   margin: 0 0 0.2rem;
   font-size: 0.75rem;
@@ -638,6 +674,46 @@
   color: #64748b;
 }
 
+.piggyPanel__movementSummary {
+  margin-top: 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.95), rgba(255, 255, 255, 0.9));
+  padding: 0.85rem 0.95rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.piggyPanel__movementSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.piggyPanel__movementSummaryRow--total {
+  margin-top: 0.15rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.55);
+  font-weight: 900;
+}
+
+.piggyPanel__movementSummaryValue {
+  font-weight: 950;
+  color: #0f172a;
+}
+
+.piggyPanel__movementSummaryValue--deposit {
+  color: #047857;
+}
+
+.piggyPanel__movementSummaryValue--withdraw {
+  color: #b91c1c;
+}
+
 /* Dark theme */
 
 :root.theme-dark .piggyPanel__container {
@@ -797,6 +873,17 @@
   background: rgba(148, 163, 184, 0.12);
 }
 
+:root.theme-dark .piggyPanel__modalDownload {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(2, 6, 23, 0.75);
+  color: #e2e8f0;
+}
+
+:root.theme-dark .piggyPanel__modalDownload:hover {
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.28);
+}
+
 :root.theme-dark .piggyPanel__modalState {
   border-color: rgba(148, 163, 184, 0.22);
   background: rgba(15, 23, 42, 0.75);
@@ -846,6 +933,31 @@
 }
 
 :root.theme-dark .piggyPanel__movementAmount--withdraw {
+  color: #fecaca;
+}
+
+:root.theme-dark .piggyPanel__movementSummary {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+:root.theme-dark .piggyPanel__movementSummaryRow {
+  color: #cbd5e1;
+}
+
+:root.theme-dark .piggyPanel__movementSummaryRow--total {
+  border-top-color: rgba(148, 163, 184, 0.24);
+}
+
+:root.theme-dark .piggyPanel__movementSummaryValue {
+  color: #e2e8f0;
+}
+
+:root.theme-dark .piggyPanel__movementSummaryValue--deposit {
+  color: #6ee7b7;
+}
+
+:root.theme-dark .piggyPanel__movementSummaryValue--withdraw {
   color: #fecaca;
 }
 

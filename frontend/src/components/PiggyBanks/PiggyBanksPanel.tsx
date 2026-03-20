@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import { usePiggyBanks } from "@/src/hooks/usePiggyBanks";
 import { formatCurrency } from "@/utils";
 import type { PiggyBank, PiggyBankMovement } from "@/types";
-import { Eye, Trash2, X } from "lucide-react";
+import { Download, Eye, Trash2, X } from "lucide-react";
+import { saveAs } from "file-saver";
 import "./PiggyBanksPanel.css";
 
 export const PiggyBanksPanel: React.FC = () => {
@@ -15,6 +16,7 @@ export const PiggyBanksPanel: React.FC = () => {
     withdrawPiggyBank,
     fetchPiggyBankMovements,
     deletePiggyBankMovement,
+    downloadPiggyBankMovementsExcel,
     refreshPiggyBanks,
     isLoading,
   } = usePiggyBanks();
@@ -28,6 +30,7 @@ export const PiggyBanksPanel: React.FC = () => {
   const [movements, setMovements] = useState<PiggyBankMovement[]>([]);
   const [movementsLoading, setMovementsLoading] = useState(false);
   const [movementsError, setMovementsError] = useState<string | null>(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -105,6 +108,25 @@ export const PiggyBanksPanel: React.FC = () => {
     setMovementsLoading(false);
   };
 
+  const handleDownloadMovementsExcel = async () => {
+    if (!movementsPiggy) return;
+    setDownloadLoading(true);
+
+    try {
+      const blob = await downloadPiggyBankMovementsExcel(movementsPiggy.id);
+      const safeName = (movementsPiggy.name || "cofrinho")
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "-")
+        .replace(/\s+/g, "-")
+        .slice(0, 80);
+      saveAs(blob, `${safeName}-movimentacoes.xlsx`);
+    } catch (err: any) {
+      alert(err?.message ?? "Erro ao baixar excel");
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
+
   const handleDeleteMovement = async (movementId: number) => {
     if (!movementsPiggy) return;
     const ok = window.confirm(
@@ -126,6 +148,25 @@ export const PiggyBanksPanel: React.FC = () => {
       setMovementsLoading(false);
     }
   };
+
+  const movementTotals = React.useMemo(() => {
+    const totalDeposit = movements.reduce((acc, m) => {
+      if (m.movement_type !== "DEPOSIT") return acc;
+      return acc + Number(m.amount ?? 0);
+    }, 0);
+
+    const totalWithdraw = movements.reduce((acc, m) => {
+      if (m.movement_type !== "WITHDRAW") return acc;
+      return acc + Number(m.amount ?? 0);
+    }, 0);
+
+    const currentBalance =
+      movements.length > 0
+        ? Number(movements[0].balance_after ?? 0)
+        : Number(movementsPiggy?.balance ?? 0);
+
+    return { totalDeposit, totalWithdraw, currentBalance };
+  }, [movements, movementsPiggy?.balance]);
 
   return (
     <section className="piggyPanel__container">
@@ -311,14 +352,27 @@ export const PiggyBanksPanel: React.FC = () => {
                     <h4 className="piggyPanel__modalTitle">{movementsPiggy.name}</h4>
                   </div>
 
-                  <button
-                    type="button"
-                    className="piggyPanel__modalClose"
-                    onClick={closeMovements}
-                    aria-label="Fechar"
-                  >
-                    <X size={18} />
-                  </button>
+                  <div className="piggyPanel__modalActions">
+                    <button
+                      type="button"
+                      className="piggyPanel__modalDownload"
+                      onClick={handleDownloadMovementsExcel}
+                      disabled={downloadLoading}
+                      title="Baixar Excel"
+                    >
+                      <Download size={18} />
+                      <span>{downloadLoading ? "Baixando..." : "Excel"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="piggyPanel__modalClose"
+                      onClick={closeMovements}
+                      aria-label="Fechar"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
                 </header>
 
                 <div className="piggyPanel__modalBody">
@@ -339,63 +393,86 @@ export const PiggyBanksPanel: React.FC = () => {
                   )}
 
                   {!movementsLoading && !movementsError && movements.length > 0 && (
-                    <ul className="piggyPanel__movementList">
-                      {movements.map((m) => {
-                        const isDeposit = m.movement_type === "DEPOSIT";
-                        const label = isDeposit ? "Aporte" : "Retirada";
-                        const signedAmount = `${isDeposit ? "+" : "-"} ${formatCurrency(
-                          Number(m.amount ?? 0),
-                        )}`;
+                    <>
+                      <ul className="piggyPanel__movementList">
+                        {movements.map((m) => {
+                          const isDeposit = m.movement_type === "DEPOSIT";
+                          const label = isDeposit ? "Aporte" : "Retirada";
+                          const signedAmount = `${isDeposit ? "+" : "-"} ${formatCurrency(
+                            Number(m.amount ?? 0),
+                          )}`;
 
-                        return (
-                          <li key={m.id} className="piggyPanel__movementItem">
-                            <div className="piggyPanel__movementLeft">
-                              <span
-                                className={
-                                  "piggyPanel__movementBadge " +
-                                  (isDeposit
-                                    ? "piggyPanel__movementBadge--deposit"
-                                    : "piggyPanel__movementBadge--withdraw")
-                                }
-                              >
-                                {label}
-                              </span>
-                              <span className="piggyPanel__movementDate">
-                                {formatMovementDate(m.created_at)}
-                              </span>
-                            </div>
-
-                            <div className="piggyPanel__movementRight">
-                              <div className="piggyPanel__movementTopRight">
+                          return (
+                            <li key={m.id} className="piggyPanel__movementItem">
+                              <div className="piggyPanel__movementLeft">
                                 <span
                                   className={
-                                    "piggyPanel__movementAmount " +
+                                    "piggyPanel__movementBadge " +
                                     (isDeposit
-                                      ? "piggyPanel__movementAmount--deposit"
-                                      : "piggyPanel__movementAmount--withdraw")
+                                      ? "piggyPanel__movementBadge--deposit"
+                                      : "piggyPanel__movementBadge--withdraw")
                                   }
                                 >
-                                  {signedAmount}
+                                  {label}
                                 </span>
-                                <button
-                                  type="button"
-                                  className="piggyPanel__movementDelete"
-                                  onClick={() => handleDeleteMovement(m.id)}
-                                  aria-label="Apagar movimentação"
-                                  title="Apagar movimentação"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
+                                <span className="piggyPanel__movementDate">
+                                  {formatMovementDate(m.created_at)}
+                                </span>
                               </div>
 
-                              <span className="piggyPanel__movementBalance">
-                                Saldo após: {formatCurrency(Number(m.balance_after ?? 0))}
-                              </span>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                              <div className="piggyPanel__movementRight">
+                                <div className="piggyPanel__movementTopRight">
+                                  <span
+                                    className={
+                                      "piggyPanel__movementAmount " +
+                                      (isDeposit
+                                        ? "piggyPanel__movementAmount--deposit"
+                                        : "piggyPanel__movementAmount--withdraw")
+                                    }
+                                  >
+                                    {signedAmount}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="piggyPanel__movementDelete"
+                                    onClick={() => handleDeleteMovement(m.id)}
+                                    aria-label="Apagar movimentação"
+                                    title="Apagar movimentação"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+
+                                <span className="piggyPanel__movementBalance">
+                                  Saldo após: {formatCurrency(Number(m.balance_after ?? 0))}
+                                </span>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+
+                      <div className="piggyPanel__movementSummary" aria-label="Resumo">
+                        <div className="piggyPanel__movementSummaryRow">
+                          <span>Total aportado</span>
+                          <strong className="piggyPanel__movementSummaryValue piggyPanel__movementSummaryValue--deposit">
+                            {formatCurrency(movementTotals.totalDeposit)}
+                          </strong>
+                        </div>
+                        <div className="piggyPanel__movementSummaryRow">
+                          <span>Total retirado</span>
+                          <strong className="piggyPanel__movementSummaryValue piggyPanel__movementSummaryValue--withdraw">
+                            {formatCurrency(movementTotals.totalWithdraw)}
+                          </strong>
+                        </div>
+                        <div className="piggyPanel__movementSummaryRow piggyPanel__movementSummaryRow--total">
+                          <span>Saldo do cofrinho</span>
+                          <strong className="piggyPanel__movementSummaryValue">
+                            {formatCurrency(movementTotals.currentBalance)}
+                          </strong>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

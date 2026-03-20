@@ -25,6 +25,7 @@ interface PiggyBanksContextType {
   withdrawPiggyBank: (id: number, amount: number) => Promise<void>;
   fetchPiggyBankMovements: (id: number) => Promise<PiggyBankMovement[]>;
   deletePiggyBankMovement: (piggyId: number, movementId: number) => Promise<void>;
+  downloadPiggyBankMovementsExcel: (piggyId: number) => Promise<Blob>;
 }
 
 const PiggyBanksContext = createContext<PiggyBanksContextType | undefined>(
@@ -302,6 +303,29 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const downloadPiggyBankMovementsExcel = async (piggyId: number) => {
+    const response = await fetch(
+      `${BASE_URL}/piggy-banks/${piggyId}/movements-export-excel/`,
+      {
+        headers: getAuthHeaders(),
+      },
+    );
+
+    if (response.status === 401) {
+      logout();
+      throw new Error("Sessão expirada");
+    }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      const message =
+        body?.error ?? body?.detail ?? `Erro ao baixar excel: ${response.status}`;
+      throw new Error(message);
+    }
+
+    return await response.blob();
+  };
+
   return (
     <PiggyBanksContext.Provider
       value={{
@@ -315,6 +339,7 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
         withdrawPiggyBank,
         fetchPiggyBankMovements,
         deletePiggyBankMovement,
+        downloadPiggyBankMovementsExcel,
       }}
     >
       {children}
