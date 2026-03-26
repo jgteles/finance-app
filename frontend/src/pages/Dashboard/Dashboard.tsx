@@ -137,7 +137,7 @@ export default function DashboardAnalytics() {
             onClick={() => navigate("/dashboard")}
             className="dashboardPage__tab dashboardPage__tab--inactive"
           >
-            Transacoes
+            Transações
           </button>
           <button
             type="button"

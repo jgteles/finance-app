@@ -14,6 +14,7 @@ from rest_framework.response import Response
 
 from .models import PiggyBank, PiggyBankMovement
 from .serializers import PiggyBankMovementSerializer, PiggyBankSerializer
+from .services import accrue_cdi_for_piggies, accrue_cdi_for_piggy, accrue_cdi_for_piggy_locked
 
 
 class PiggyBankViewSet(viewsets.ModelViewSet):
@@ -26,6 +27,25 @@ class PiggyBankViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            updated = accrue_cdi_for_piggies([p.id for p in page], user=request.user)
+            serializer = self.get_serializer(updated, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        items = list(queryset)
+        updated = accrue_cdi_for_piggies([p.id for p in items], user=request.user)
+        serializer = self.get_serializer(updated, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        piggy = accrue_cdi_for_piggy(int(kwargs["pk"]), user=request.user)
+        serializer = self.get_serializer(piggy)
+        return Response(serializer.data)
 
     def _parse_amount(self, request) -> Decimal | None:
         raw = request.data.get("amount", None)
@@ -45,8 +65,9 @@ class PiggyBankViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        piggy = self.get_object()
         with transaction.atomic():
+            piggy = PiggyBank.objects.select_for_update().get(pk=pk, user=request.user)
+            accrue_cdi_for_piggy_locked(piggy)
             piggy.balance = piggy.balance + amount
             piggy.save(update_fields=["balance", "updated_at"])
             PiggyBankMovement.objects.create(
@@ -67,15 +88,17 @@ class PiggyBankViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        piggy = self.get_object()
-        next_balance = piggy.balance - amount
-        if next_balance < 0:
-            return Response(
-                {"error": "insufficient balance"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         with transaction.atomic():
+            piggy = PiggyBank.objects.select_for_update().get(pk=pk, user=request.user)
+            accrue_cdi_for_piggy_locked(piggy)
+
+            next_balance = piggy.balance - amount
+            if next_balance < 0:
+                return Response(
+                    {"error": "insufficient balance"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             piggy.balance = next_balance
             piggy.save(update_fields=["balance", "updated_at"])
             PiggyBankMovement.objects.create(
@@ -89,7 +112,7 @@ class PiggyBankViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def movements(self, request, pk=None):
-        piggy = self.get_object()
+        piggy = accrue_cdi_for_piggy(int(pk), user=request.user)
         queryset = piggy.movements.all()
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -100,7 +123,7 @@ class PiggyBankViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="movements-export-excel")
     def export_movements_excel(self, request, pk=None):
-        piggy = self.get_object()
+        piggy = accrue_cdi_for_piggy(int(pk), user=request.user)
         movements = piggy.movements.order_by("created_at", "id").all()
 
         wb = openpyxl.Workbook()
@@ -179,10 +202,9 @@ class PiggyBankViewSet(viewsets.ModelViewSet):
         url_path=r"movements/(?P<movement_id>[^/.]+)",
     )
     def delete_movement(self, request, pk=None, movement_id=None):
-        piggy = self.get_object()
-
         with transaction.atomic():
-            piggy = PiggyBank.objects.select_for_update().get(pk=piggy.pk, user=request.user)
+            piggy = PiggyBank.objects.select_for_update().get(pk=pk, user=request.user)
+            accrue_cdi_for_piggy_locked(piggy)
 
             movement = piggy.movements.filter(id=movement_id).first()
             if movement is None:

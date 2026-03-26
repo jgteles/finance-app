@@ -15,11 +15,14 @@ interface PiggyBanksContextType {
   piggyBanks: PiggyBank[];
   isLoading: boolean;
   refreshPiggyBanks: () => Promise<void>;
-  addPiggyBank: (data: Pick<PiggyBank, "name" | "color" | "target_amount">) => Promise<void>;
+  addPiggyBank: (
+    data: Pick<PiggyBank, "name" | "color" | "target_amount" | "cdi_percentage">,
+  ) => Promise<void>;
   updatePiggyBank: (
     id: number,
     data: Partial<Omit<PiggyBank, "id">>,
   ) => Promise<void>;
+  setCdiPercentageForAll: (cdiPercentage: number) => Promise<void>;
   removePiggyBank: (id: number) => Promise<void>;
   depositPiggyBank: (id: number, amount: number) => Promise<void>;
   withdrawPiggyBank: (id: number, amount: number) => Promise<void>;
@@ -45,6 +48,12 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
       balance: Number(raw?.balance ?? 0),
       target_amount:
         raw?.target_amount == null ? null : Number(raw?.target_amount),
+      cdi_percentage:
+        raw?.cdi_percentage == null ? undefined : Number(raw?.cdi_percentage),
+      last_cdi_accrual_date:
+        raw?.last_cdi_accrual_date == null
+          ? undefined
+          : String(raw?.last_cdi_accrual_date),
       created_at: raw?.created_at,
       updated_at: raw?.updated_at,
     };
@@ -124,7 +133,7 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, refreshPiggyBanks]);
 
   const addPiggyBank = async (
-    data: Pick<PiggyBank, "name" | "color" | "target_amount">,
+    data: Pick<PiggyBank, "name" | "color" | "target_amount" | "cdi_percentage">,
   ) => {
     try {
       const response = await fetch(`${BASE_URL}/piggy-banks/`, {
@@ -180,6 +189,37 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
       await refreshPiggyBanks();
     } catch (err) {
       console.error("updatePiggyBank error:", err);
+      throw err;
+    }
+  };
+
+  const setCdiPercentageForAll = async (cdiPercentage: number) => {
+    const ids = piggyBanks.map((p) => p.id);
+    if (ids.length === 0) return;
+
+    try {
+      await Promise.all(
+        ids.map(async (id) => {
+          const response = await fetch(`${BASE_URL}/piggy-banks/${id}/`, {
+            method: "PATCH",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ cdi_percentage: cdiPercentage }),
+          });
+
+          if (response.status === 401) {
+            logout();
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(`Erro ao atualizar % do CDI: ${response.status}`);
+          }
+        }),
+      );
+
+      await refreshPiggyBanks();
+    } catch (err) {
+      console.error("setCdiPercentageForAll error:", err);
       throw err;
     }
   };
@@ -334,6 +374,7 @@ export function PiggyBanksProvider({ children }: { children: ReactNode }) {
         refreshPiggyBanks,
         addPiggyBank,
         updatePiggyBank,
+        setCdiPercentageForAll,
         removePiggyBank,
         depositPiggyBank,
         withdrawPiggyBank,

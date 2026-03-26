@@ -1,0 +1,32 @@
+.route-transition-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.route-transition-page {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+}
+
+.route-enter {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.route-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.route-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.route-exit-active {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from decimal import Decimal, InvalidOperation
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -11,6 +12,18 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+
+
+def _decimal_env(name: str, default: str) -> Decimal:
+    raw = os.getenv(name, default)
+    try:
+        return Decimal(str(raw))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal(default)
+
+
+# Base CDI daily rate used for accrual (in percent, e.g. 0.05 = 0.05% per day).
+CDI_DAILY_RATE_PERCENT = _decimal_env("CDI_DAILY_RATE_PERCENT", "0")
 
 # ===========================
 # Applications

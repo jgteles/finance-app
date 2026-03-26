@@ -11,6 +11,8 @@ export const PiggyBanksPanel: React.FC = () => {
   const {
     piggyBanks,
     addPiggyBank,
+    updatePiggyBank,
+    setCdiPercentageForAll,
     removePiggyBank,
     depositPiggyBank,
     withdrawPiggyBank,
@@ -25,6 +27,18 @@ export const PiggyBanksPanel: React.FC = () => {
   const [color, setColor] = useState("#22c55e");
   const [targetAmount, setTargetAmount] = useState<string>("");
   const [adjustById, setAdjustById] = useState<Record<number, string>>({});
+  const [useGlobalCdi, setUseGlobalCdi] = useState<boolean>(() => {
+    return localStorage.getItem("piggy_use_global_cdi") === "true";
+  });
+  const [globalCdiPercentage, setGlobalCdiPercentage] = useState<string>(() => {
+    return localStorage.getItem("piggy_global_cdi_percentage") ?? "100";
+  });
+  const [cdiPercentage, setCdiPercentage] = useState<string>(() => {
+    return localStorage.getItem("piggy_new_cdi_percentage") ?? "100";
+  });
+  const [cdiById, setCdiById] = useState<Record<number, string>>({});
+  const [applyAllLoading, setApplyAllLoading] = useState(false);
+  const [applyAllModalOpen, setApplyAllModalOpen] = useState(false);
 
   const [movementsPiggy, setMovementsPiggy] = useState<PiggyBank | null>(null);
   const [movements, setMovements] = useState<PiggyBankMovement[]>([]);
@@ -40,10 +54,21 @@ export const PiggyBanksPanel: React.FC = () => {
       await addPiggyBank({
         name: name.trim(),
         color,
-        target_amount: targetAmount ? Number(targetAmount.replace(",", ".")) : null,
+        target_amount: targetAmount
+          ? Number(targetAmount.replace(",", "."))
+          : null,
+        cdi_percentage: useGlobalCdi
+          ? Number(globalCdiPercentage.replace(",", "."))
+          : cdiPercentage
+            ? Number(cdiPercentage.replace(",", "."))
+            : 100,
       });
       setName("");
       setTargetAmount("");
+      if (!useGlobalCdi) {
+        setCdiPercentage("100");
+        localStorage.setItem("piggy_new_cdi_percentage", "100");
+      }
     } catch (err: any) {
       alert(err?.message ?? "Erro ao criar cofrinho");
     }
@@ -53,6 +78,45 @@ export const PiggyBanksPanel: React.FC = () => {
     const normalized = raw.replace(",", ".");
     const amount = Number(normalized);
     return Number.isFinite(amount) ? amount : 0;
+  };
+
+  const handleApplyGlobalCdiToAll = async () => {
+    const next = parseAmount(globalCdiPercentage);
+    if (!Number.isFinite(next) || next < 0 || next > 200) {
+      alert("Informe um % do CDI entre 0 e 200.");
+      return;
+    }
+
+    setApplyAllLoading(true);
+    try {
+      await setCdiPercentageForAll(next);
+      setCdiById({});
+      setApplyAllModalOpen(false);
+    } catch (err: any) {
+      alert(err?.message ?? "Erro ao aplicar CDI para todos os cofrinhos");
+    } finally {
+      setApplyAllLoading(false);
+    }
+  };
+
+  const handleSaveCdiPercentage = async (piggy: PiggyBank) => {
+    const raw = cdiById[piggy.id];
+    const next =
+      raw == null || raw === ""
+        ? (piggy.cdi_percentage ?? 100)
+        : parseAmount(raw);
+
+    if (!Number.isFinite(next) || next < 0 || next > 200) {
+      alert("Informe um % do CDI entre 0 e 200.");
+      return;
+    }
+
+    try {
+      await updatePiggyBank(piggy.id, { cdi_percentage: next });
+      setCdiById((prev) => ({ ...prev, [piggy.id]: String(next) }));
+    } catch (err: any) {
+      alert(err?.message ?? "Erro ao atualizar % do CDI");
+    }
   };
 
   const handleDeposit = async (id: number) => {
@@ -175,7 +239,8 @@ export const PiggyBanksPanel: React.FC = () => {
           <p className="piggyPanel__kicker">Cofrinhos</p>
           <h3 className="piggyPanel__title">Objetivos de economia</h3>
           <p className="piggyPanel__subtitle">
-            Crie cofrinhos para separar metas como viagem, emergência ou investimentos.
+            Crie cofrinhos para separar metas como viagem, emergência ou
+            investimentos.
           </p>
         </div>
       </header>
@@ -216,6 +281,69 @@ export const PiggyBanksPanel: React.FC = () => {
                 placeholder="Ex.: 5000"
               />
             </label>
+
+            <label className="piggyPanel__label">
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={useGlobalCdi}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setUseGlobalCdi(checked);
+                    localStorage.setItem(
+                      "piggy_use_global_cdi",
+                      String(checked),
+                    );
+                    if (checked) {
+                      setApplyAllModalOpen(true);
+                    }
+                  }}
+                />
+                Usar o mesmo % CDI para todos
+              </span>
+            </label>
+
+            {useGlobalCdi ? (
+              <label className="piggyPanel__label">
+                % do CDI (global)
+                <input
+                  type="number"
+                  min={0}
+                  max={200}
+                  step={0.01}
+                  className="piggyPanel__input"
+                  value={globalCdiPercentage}
+                  onChange={(e) => {
+                    setGlobalCdiPercentage(e.target.value);
+                    localStorage.setItem(
+                      "piggy_global_cdi_percentage",
+                      e.target.value,
+                    );
+                  }}
+                  placeholder="Ex.: 100"
+                />
+              </label>
+            ) : (
+              <label className="piggyPanel__label">
+                Rendimento (% do CDI)
+                <input
+                  type="number"
+                  min={0}
+                  max={200}
+                  step={0.01}
+                  className="piggyPanel__input"
+                  value={cdiPercentage}
+                  onChange={(e) => {
+                    setCdiPercentage(e.target.value);
+                    localStorage.setItem(
+                      "piggy_new_cdi_percentage",
+                      e.target.value,
+                    );
+                  }}
+                  placeholder="Ex.: 100"
+                />
+              </label>
+            )}
           </div>
 
           <button
@@ -227,172 +355,218 @@ export const PiggyBanksPanel: React.FC = () => {
           </button>
         </form>
 
-	        <div className="piggyPanel__list">
-	          {piggyBanks.length === 0 && !isLoading && (
-	            <p className="piggyPanel__empty">
-	              Nenhum cofrinho criado ainda. Comece adicionando o primeiro objetivo.
-	            </p>
-	          )}
+        <div className="piggyPanel__list">
+          {piggyBanks.length === 0 && !isLoading && (
+            <p className="piggyPanel__empty">
+              Nenhum cofrinho criado ainda. Comece adicionando o primeiro
+              objetivo.
+            </p>
+          )}
 
-	          {piggyBanks.map((piggy) => (
-	            <article
-	              key={piggy.id}
-	              className="piggyPanel__item"
-	              style={{ ["--piggy-color" as any]: piggy.color } as React.CSSProperties}
-	            >
-	              <div className="piggyPanel__itemTop">
-	                <div className="piggyPanel__itemHeader">
-	                  <div className="piggyPanel__avatar">
-	                    {piggy.name?.trim()?.[0]?.toUpperCase() ?? "C"}
-	                  </div>
-	                  <div className="piggyPanel__itemText">
-	                    <h4 className="piggyPanel__itemTitle">{piggy.name}</h4>
-	                    <p className="piggyPanel__itemMeta">
-	                      Saldo: {formatCurrency(Number((piggy as any).balance ?? 0))}
-	                      {(piggy as any).target_amount != null && (
-	                        <>
-	                          {" "}
-	                          · Meta:{" "}
-	                          {formatCurrency(Number((piggy as any).target_amount))}
-	                        </>
-	                      )}
-	                    </p>
-	                  </div>
-	                </div>
-
-                  <div className="piggyPanel__topActions">
-                    <button
-                      type="button"
-                      className="piggyPanel__view"
-                      onClick={() => openMovements(piggy)}
-                      aria-label={`Ver movimentações do cofrinho ${piggy.name}`}
-                      title="Ver movimentações"
-                    >
-                      <Eye size={18} />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="piggyPanel__remove"
-                      onClick={() => removePiggyBank(piggy.id)}
-                    >
-                      Remover
-                    </button>
-                  </div>
-	              </div>
-
-	              {(piggy as any).target_amount != null &&
-	                Number((piggy as any).target_amount) > 0 && (
-	                  <div className="piggyPanel__progress" aria-hidden="true">
-	                    <div
-	                      className="piggyPanel__progressBar"
-	                      style={{
-	                        width: `${Math.min(
-	                          100,
-	                          (Number((piggy as any).balance ?? 0) /
-	                            Number((piggy as any).target_amount)) *
-	                            100,
-	                        ).toFixed(1)}%`,
-	                      }}
-	                    />
-	                  </div>
-	                )}
-
-	              <div className="piggyPanel__itemActions">
-	                <input
-	                  type="number"
-	                  min={0}
-	                  step={0.01}
-	                  className="piggyPanel__amountInput"
-	                  value={adjustById[piggy.id] ?? ""}
-	                  onChange={(e) =>
-	                    setAdjustById((prev) => ({
-	                      ...prev,
-	                      [piggy.id]: e.target.value,
-	                    }))
-	                  }
-	                  placeholder="Valor"
-	                />
-	                <button
-	                  type="button"
-	                  className="piggyPanel__actionBtn piggyPanel__actionBtn--deposit"
-	                  onClick={() => handleDeposit(piggy.id)}
-	                  disabled={isLoading}
-	                >
-	                  Aportar
-	                </button>
-	                <button
-	                  type="button"
-	                  className="piggyPanel__actionBtn piggyPanel__actionBtn--withdraw"
-	                  onClick={() => handleWithdraw(piggy.id)}
-	                  disabled={isLoading}
-	                >
-	                  Retirar
-	                </button>
-	              </div>
-	            </article>
-	          ))}
-	        </div>
-	      </div>
-
-        {movementsPiggy &&
-          createPortal(
-            <div
-              className="piggyPanel__modalOverlay"
-              role="dialog"
-              aria-modal="true"
-              onMouseDown={(e) => {
-                if (e.target === e.currentTarget) closeMovements();
-              }}
+          {piggyBanks.map((piggy) => (
+            <article
+              key={piggy.id}
+              className="piggyPanel__item"
+              style={
+                { ["--piggy-color" as any]: piggy.color } as React.CSSProperties
+              }
             >
-              <div className="piggyPanel__modal" onMouseDown={(e) => e.stopPropagation()}>
-                <header className="piggyPanel__modalHeader">
-                  <div className="piggyPanel__modalTitleWrap">
-                    <p className="piggyPanel__modalKicker">Movimentações</p>
-                    <h4 className="piggyPanel__modalTitle">{movementsPiggy.name}</h4>
+              <div className="piggyPanel__itemTop">
+                <div className="piggyPanel__itemHeader">
+                  <div className="piggyPanel__avatar">
+                    {piggy.name?.trim()?.[0]?.toUpperCase() ?? "C"}
                   </div>
-
-                  <div className="piggyPanel__modalActions">
-                    <button
-                      type="button"
-                      className="piggyPanel__modalDownload"
-                      onClick={handleDownloadMovementsExcel}
-                      disabled={downloadLoading}
-                      title="Baixar Excel"
-                    >
-                      <Download size={18} />
-                      <span>{downloadLoading ? "Baixando..." : "Excel"}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="piggyPanel__modalClose"
-                      onClick={closeMovements}
-                      aria-label="Fechar"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                </header>
-
-                <div className="piggyPanel__modalBody">
-                  {movementsLoading && (
-                    <p className="piggyPanel__modalState">Carregando movimentações...</p>
-                  )}
-
-                  {!movementsLoading && movementsError && (
-                    <p className="piggyPanel__modalState piggyPanel__modalState--error">
-                      {movementsError}
+                  <div className="piggyPanel__itemText">
+                    <h4 className="piggyPanel__itemTitle">{piggy.name}</h4>
+                    <p className="piggyPanel__itemMeta">
+                      Saldo:{" "}
+                      {formatCurrency(Number((piggy as any).balance ?? 0))} ·
+                      CDI: {Number(piggy.cdi_percentage ?? 100).toFixed(2)}%
+                      {(piggy as any).target_amount != null && (
+                        <>
+                          {" "}
+                          · Meta:{" "}
+                          {formatCurrency(Number((piggy as any).target_amount))}
+                        </>
+                      )}
                     </p>
-                  )}
+                  </div>
+                </div>
 
-                  {!movementsLoading && !movementsError && movements.length === 0 && (
+                <div className="piggyPanel__topActions">
+                  <button
+                    type="button"
+                    className="piggyPanel__view"
+                    onClick={() => openMovements(piggy)}
+                    aria-label={`Ver movimentações do cofrinho ${piggy.name}`}
+                    title="Ver movimentações"
+                  >
+                    <Eye size={18} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="piggyPanel__remove"
+                    onClick={() => removePiggyBank(piggy.id)}
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+
+              {(piggy as any).target_amount != null &&
+                Number((piggy as any).target_amount) > 0 && (
+                  <div className="piggyPanel__progress" aria-hidden="true">
+                    <div
+                      className="piggyPanel__progressBar"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          (Number((piggy as any).balance ?? 0) /
+                            Number((piggy as any).target_amount)) *
+                            100,
+                        ).toFixed(1)}%`,
+                      }}
+                    />
+                  </div>
+                )}
+
+              <div className="piggyPanel__itemActions">
+                {!useGlobalCdi && (
+                  <>
+                    <input
+                      type="number"
+                      min={0}
+                      max={200}
+                      step={0.01}
+                      className="piggyPanel__amountInput"
+                      value={
+                        cdiById[piggy.id] ?? String(piggy.cdi_percentage ?? 100)
+                      }
+                      onChange={(e) =>
+                        setCdiById((prev) => ({
+                          ...prev,
+                          [piggy.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="% CDI"
+                    />
+                    <button
+                      type="button"
+                      className="piggyPanel__actionBtn"
+                      onClick={() => handleSaveCdiPercentage(piggy)}
+                      disabled={isLoading}
+                    >
+                      Salvar CDI
+                    </button>
+                  </>
+                )}
+
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  className="piggyPanel__amountInput"
+                  value={adjustById[piggy.id] ?? ""}
+                  onChange={(e) =>
+                    setAdjustById((prev) => ({
+                      ...prev,
+                      [piggy.id]: e.target.value,
+                    }))
+                  }
+                  placeholder="Valor"
+                />
+                <button
+                  type="button"
+                  className="piggyPanel__actionBtn piggyPanel__actionBtn--deposit"
+                  onClick={() => handleDeposit(piggy.id)}
+                  disabled={isLoading}
+                >
+                  Aportar
+                </button>
+                <button
+                  type="button"
+                  className="piggyPanel__actionBtn piggyPanel__actionBtn--withdraw"
+                  onClick={() => handleWithdraw(piggy.id)}
+                  disabled={isLoading}
+                >
+                  Retirar
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      {movementsPiggy &&
+        createPortal(
+          <div
+            className="piggyPanel__modalOverlay"
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) closeMovements();
+            }}
+          >
+            <div
+              className="piggyPanel__modal"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <header className="piggyPanel__modalHeader">
+                <div className="piggyPanel__modalTitleWrap">
+                  <p className="piggyPanel__modalKicker">Movimentações</p>
+                  <h4 className="piggyPanel__modalTitle">
+                    {movementsPiggy.name}
+                  </h4>
+                </div>
+
+                <div className="piggyPanel__modalActions">
+                  <button
+                    type="button"
+                    className="piggyPanel__modalDownload"
+                    onClick={handleDownloadMovementsExcel}
+                    disabled={downloadLoading}
+                    title="Baixar Excel"
+                  >
+                    <Download size={18} />
+                    <span>{downloadLoading ? "Baixando..." : "Excel"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="piggyPanel__modalClose"
+                    onClick={closeMovements}
+                    aria-label="Fechar"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </header>
+
+              <div className="piggyPanel__modalBody">
+                {movementsLoading && (
+                  <p className="piggyPanel__modalState">
+                    Carregando movimentações...
+                  </p>
+                )}
+
+                {!movementsLoading && movementsError && (
+                  <p className="piggyPanel__modalState piggyPanel__modalState--error">
+                    {movementsError}
+                  </p>
+                )}
+
+                {!movementsLoading &&
+                  !movementsError &&
+                  movements.length === 0 && (
                     <p className="piggyPanel__modalState">
                       Nenhuma movimentação registrada ainda.
                     </p>
                   )}
 
-                  {!movementsLoading && !movementsError && movements.length > 0 && (
+                {!movementsLoading &&
+                  !movementsError &&
+                  movements.length > 0 && (
                     <>
                       <ul className="piggyPanel__movementList">
                         {movements.map((m) => {
@@ -444,7 +618,8 @@ export const PiggyBanksPanel: React.FC = () => {
                                 </div>
 
                                 <span className="piggyPanel__movementBalance">
-                                  Saldo após: {formatCurrency(Number(m.balance_after ?? 0))}
+                                  Saldo após:{" "}
+                                  {formatCurrency(Number(m.balance_after ?? 0))}
                                 </span>
                               </div>
                             </li>
@@ -452,7 +627,10 @@ export const PiggyBanksPanel: React.FC = () => {
                         })}
                       </ul>
 
-                      <div className="piggyPanel__movementSummary" aria-label="Resumo">
+                      <div
+                        className="piggyPanel__movementSummary"
+                        aria-label="Resumo"
+                      >
                         <div className="piggyPanel__movementSummaryRow">
                           <span>Total aportado</span>
                           <strong className="piggyPanel__movementSummaryValue piggyPanel__movementSummaryValue--deposit">
@@ -474,12 +652,104 @@ export const PiggyBanksPanel: React.FC = () => {
                       </div>
                     </>
                   )}
-                </div>
               </div>
-            </div>,
-            document.body,
-          )}
-	    </section>
-	  );
-	};
+            </div>
+          </div>,
+          document.body,
+        )}
 
+      {applyAllModalOpen &&
+        createPortal(
+          <div
+            className="piggyPanel__modalOverlay"
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setApplyAllModalOpen(false);
+            }}
+          >
+            <div
+              className="piggyPanel__modal"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <header className="piggyPanel__modalHeader">
+                <div className="piggyPanel__modalTitleWrap">
+                  <p className="piggyPanel__modalKicker">CDI Global</p>
+                  <h4 className="piggyPanel__modalTitle">
+                    Aplicar para todos os cofrinhos
+                  </h4>
+                </div>
+
+                <div className="piggyPanel__modalActions">
+                  <button
+                    type="button"
+                    className="piggyPanel__modalClose"
+                    onClick={() => setApplyAllModalOpen(false)}
+                    aria-label="Fechar"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </header>
+
+              <div className="piggyPanel__modalBody">
+                <p className="piggyPanel__modalState">
+                  Isso vai atualizar o % do CDI de{" "}
+                  <strong>{piggyBanks.length}</strong> cofrinho(s). Você pode
+                  desfazer depois alterando individualmente.
+                </p>
+
+                <div style={{ height: 14 }} aria-hidden="true" />
+
+                <label className="piggyPanel__label">
+                  % do CDI (global)
+                  <input
+                    type="number"
+                    min={0}
+                    max={200}
+                    step={0.01}
+                    className="piggyPanel__input"
+                    value={globalCdiPercentage}
+                    onChange={(e) => {
+                      setGlobalCdiPercentage(e.target.value);
+                      localStorage.setItem(
+                        "piggy_global_cdi_percentage",
+                        e.target.value,
+                      );
+                    }}
+                    placeholder="Ex.: 100"
+                  />
+                </label>
+
+                <div style={{ height: 14 }} aria-hidden="true" />
+
+                <button
+                  type="button"
+                  className="piggyPanel__submit"
+                  onClick={handleApplyGlobalCdiToAll}
+                  disabled={
+                    isLoading || applyAllLoading || piggyBanks.length === 0
+                  }
+                  title="Confirma a aplicaÃ§Ã£o do CDI global"
+                >
+                  {applyAllLoading ? "Aplicando..." : "Confirmar e aplicar"}
+                </button>
+
+                <div style={{ height: 10 }} aria-hidden="true" />
+
+                <button
+                  type="button"
+                  className="piggyPanel__modalDownload"
+                  onClick={() => setApplyAllModalOpen(false)}
+                  disabled={applyAllLoading}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </section>
+  );
+};

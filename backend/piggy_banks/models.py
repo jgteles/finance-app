@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class PiggyBank(models.Model):
@@ -22,6 +23,12 @@ class PiggyBank(models.Model):
         null=True,
         blank=True,
     )
+
+    # Percent of CDI this piggy bank yields (e.g. 100 = 100% of CDI, 80 = 80% of CDI).
+    cdi_percentage = models.DecimalField(max_digits=6, decimal_places=2, default=100)
+
+    # Date of the last CDI accrual applied to `balance`.
+    last_cdi_accrual_date = models.DateField(default=timezone.localdate)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

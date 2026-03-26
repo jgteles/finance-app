@@ -21,6 +21,8 @@ export interface PiggyBank {
   color: string;
   balance: number;
   target_amount?: number | null;
+  cdi_percentage?: number;
+  last_cdi_accrual_date?: string;
   created_at?: string;
   updated_at?: string;
 }
