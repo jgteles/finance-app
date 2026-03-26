@@ -39,6 +39,7 @@ export const PiggyBanksPanel: React.FC = () => {
   const [cdiById, setCdiById] = useState<Record<number, string>>({});
   const [applyAllLoading, setApplyAllLoading] = useState(false);
   const [applyAllModalOpen, setApplyAllModalOpen] = useState(false);
+  const [pendingGlobalCdiEnable, setPendingGlobalCdiEnable] = useState(false);
 
   const [movementsPiggy, setMovementsPiggy] = useState<PiggyBank | null>(null);
   const [movements, setMovements] = useState<PiggyBankMovement[]>([]);
@@ -91,11 +92,23 @@ export const PiggyBanksPanel: React.FC = () => {
     try {
       await setCdiPercentageForAll(next);
       setCdiById({});
+      localStorage.setItem("piggy_use_global_cdi", "true");
+      setPendingGlobalCdiEnable(false);
       setApplyAllModalOpen(false);
     } catch (err: any) {
       alert(err?.message ?? "Erro ao aplicar CDI para todos os cofrinhos");
     } finally {
       setApplyAllLoading(false);
+    }
+  };
+
+  const closeApplyAllModal = () => {
+    setApplyAllModalOpen(false);
+
+    if (pendingGlobalCdiEnable) {
+      setUseGlobalCdi(false);
+      localStorage.setItem("piggy_use_global_cdi", "false");
+      setPendingGlobalCdiEnable(false);
     }
   };
 
@@ -289,14 +302,15 @@ export const PiggyBanksPanel: React.FC = () => {
                   checked={useGlobalCdi}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    setUseGlobalCdi(checked);
-                    localStorage.setItem(
-                      "piggy_use_global_cdi",
-                      String(checked),
-                    );
                     if (checked) {
+                      setUseGlobalCdi(true);
+                      setPendingGlobalCdiEnable(true);
                       setApplyAllModalOpen(true);
+                      return;
                     }
+
+                    setUseGlobalCdi(false);
+                    localStorage.setItem("piggy_use_global_cdi", "false");
                   }}
                 />
                 Usar o mesmo % CDI para todos
@@ -665,7 +679,7 @@ export const PiggyBanksPanel: React.FC = () => {
             role="dialog"
             aria-modal="true"
             onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setApplyAllModalOpen(false);
+              if (e.target === e.currentTarget) closeApplyAllModal();
             }}
           >
             <div
@@ -684,7 +698,7 @@ export const PiggyBanksPanel: React.FC = () => {
                   <button
                     type="button"
                     className="piggyPanel__modalClose"
-                    onClick={() => setApplyAllModalOpen(false)}
+                    onClick={closeApplyAllModal}
                     aria-label="Fechar"
                   >
                     <X size={18} />
@@ -723,28 +737,27 @@ export const PiggyBanksPanel: React.FC = () => {
 
                 <div style={{ height: 14 }} aria-hidden="true" />
 
+                <div className="piggyPanel__modalFooter">
                 <button
                   type="button"
                   className="piggyPanel__submit"
                   onClick={handleApplyGlobalCdiToAll}
-                  disabled={
-                    isLoading || applyAllLoading || piggyBanks.length === 0
-                  }
+                  disabled={isLoading || applyAllLoading}
                   title="Confirma a aplicaÃ§Ã£o do CDI global"
                 >
                   {applyAllLoading ? "Aplicando..." : "Confirmar e aplicar"}
                 </button>
 
-                <div style={{ height: 10 }} aria-hidden="true" />
 
                 <button
                   type="button"
                   className="piggyPanel__modalDownload"
-                  onClick={() => setApplyAllModalOpen(false)}
+                  onClick={closeApplyAllModal}
                   disabled={applyAllLoading}
                 >
                   Cancelar
                 </button>
+                </div>
               </div>
             </div>
           </div>,
